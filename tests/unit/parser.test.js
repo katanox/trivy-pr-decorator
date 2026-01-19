@@ -19,6 +19,7 @@ describe('TrivyParser', () => {
         Results: [
           {
             Target: 'package-lock.json',
+            Type: 'npm',
             Vulnerabilities: [
               {
                 VulnerabilityID: 'CVE-2023-1234',
@@ -48,6 +49,7 @@ describe('TrivyParser', () => {
       expect(result.vulnerabilities).toHaveLength(2);
       expect(result.vulnerabilities[0]).toEqual({
         target: 'package-lock.json',
+        type: 'npm',
         id: 'CVE-2023-1234',
         package: 'lodash',
         installedVersion: '4.17.19',
@@ -148,6 +150,7 @@ describe('TrivyParser', () => {
 
       expect(result.vulnerabilities[0]).toEqual({
         target: 'unknown',
+        type: 'unknown',
         id: '',
         package: '',
         installedVersion: '',

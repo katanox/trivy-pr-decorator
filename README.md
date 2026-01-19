@@ -103,13 +103,13 @@ The action posts a formatted comment to your pull request that looks like this:
 
 ### Vulnerability Details
 
-| Severity | Package | Vulnerability | Installed | Fixed |
-|----------|---------|---------------|-----------|-------|
-| 🔴 CRITICAL | lodash | CVE-2023-1234 | 4.17.19 | 4.17.21 |
-| 🔴 CRITICAL | axios | CVE-2023-5678 | 0.21.1 | 0.21.4 |
-| 🔴 CRITICAL | express | CVE-2023-9012 | 4.17.1 | 4.18.2 |
-| 🟠 HIGH | moment | CVE-2023-3456 | 2.29.1 | 2.29.4 |
-| 🟠 HIGH | webpack | CVE-2023-7890 | 5.75.0 | 5.76.0 |
+| Severity | Package | Type | Vulnerability | Installed | Fixed |
+|----------|---------|------|---------------|-----------|-------|
+| 🔴 CRITICAL | lodash | npm | CVE-2023-1234 | 4.17.19 | 4.17.21 |
+| 🔴 CRITICAL | axios | npm | CVE-2023-5678 | 0.21.1 | 0.21.4 |
+| 🔴 CRITICAL | express | npm | CVE-2023-9012 | 4.17.1 | 4.18.2 |
+| 🟠 HIGH | moment | npm | CVE-2023-3456 | 2.29.1 | 2.29.4 |
+| 🟠 HIGH | webpack | npm | CVE-2023-7890 | 5.75.0 | 5.76.0 |
 
 *... and 23 more*
 ```

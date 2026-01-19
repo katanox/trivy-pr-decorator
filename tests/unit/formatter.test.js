@@ -15,6 +15,7 @@ describe('CommentFormatter', () => {
             target: 'package-lock.json',
             id: 'CVE-2023-1234',
             package: 'lodash',
+            type: 'npm',
             installedVersion: '4.17.19',
             fixedVersion: '4.17.21',
             severity: 'HIGH',
@@ -33,9 +34,9 @@ describe('CommentFormatter', () => {
       const result = formatter.format(results, 20);
 
       expect(result).toContain('## 🔒 Trivy Security Scan');
-      expect(result).toContain('🟠 **1 🟠 HIGH** (1 total)');
+      expect(result).toContain('🟠 **1 HIGH** (1 total)');
       expect(result).toContain('### Vulnerability Details');
-      expect(result).toContain('| 🟠 HIGH | lodash | CVE-2023-1234 | 4.17.19 | 4.17.21 |');
+      expect(result).toContain('| 🟠 HIGH | lodash | npm | CVE-2023-1234 | 4.17.19 | 4.17.21 |');
     });
 
     it('should format comment with no vulnerabilities', () => {
@@ -69,8 +70,8 @@ describe('CommentFormatter', () => {
       const counts = { critical: 2, high: 1, medium: 0, low: 0, total: 3 };
       const result = formatter.formatSummary(counts);
       expect(result).toContain('🔴');
-      expect(result).toContain('2 🔴 CRITICAL');
-      expect(result).toContain('1 🟠 HIGH');
+      expect(result).toContain('2 CRITICAL');
+      expect(result).toContain('1 HIGH');
       expect(result).toContain('(3 total)');
     });
 
@@ -78,8 +79,8 @@ describe('CommentFormatter', () => {
       const counts = { critical: 0, high: 3, medium: 1, low: 0, total: 4 };
       const result = formatter.formatSummary(counts);
       expect(result).toContain('🟠');
-      expect(result).toContain('3 🟠 HIGH');
-      expect(result).toContain('1 🟡 MEDIUM');
+      expect(result).toContain('3 HIGH');
+      expect(result).toContain('1 MEDIUM');
       expect(result).not.toContain('CRITICAL');
     });
 
@@ -87,15 +88,15 @@ describe('CommentFormatter', () => {
       const counts = { critical: 0, high: 0, medium: 2, low: 1, total: 3 };
       const result = formatter.formatSummary(counts);
       expect(result).toContain('🟡');
-      expect(result).toContain('2 🟡 MEDIUM');
-      expect(result).toContain('1 ⚪ LOW');
+      expect(result).toContain('2 MEDIUM');
+      expect(result).toContain('1 LOW');
     });
 
     it('should only include non-zero severity counts', () => {
       const counts = { critical: 1, high: 0, medium: 0, low: 2, total: 3 };
       const result = formatter.formatSummary(counts);
-      expect(result).toContain('1 🔴 CRITICAL');
-      expect(result).toContain('2 ⚪ LOW');
+      expect(result).toContain('1 CRITICAL');
+      expect(result).toContain('2 LOW');
       expect(result).not.toContain('HIGH');
       expect(result).not.toContain('MEDIUM');
     });
@@ -112,6 +113,7 @@ describe('CommentFormatter', () => {
         {
           id: 'CVE-2023-1234',
           package: 'lodash',
+          type: 'npm',
           installedVersion: '4.17.19',
           fixedVersion: '4.17.21',
           severity: 'HIGH'
@@ -121,16 +123,16 @@ describe('CommentFormatter', () => {
       const result = formatter.formatTable(vulnerabilities, 20);
 
       expect(result).toContain('### Vulnerability Details');
-      expect(result).toContain('| Severity | Package | Vulnerability | Installed | Fixed |');
-      expect(result).toContain('|----------|---------|---------------|-----------|-------|');
+      expect(result).toContain('| Severity | Package | Type | Vulnerability | Installed | Fixed |');
+      expect(result).toContain('|----------|---------|------|---------------|-----------|-------|');
     });
 
     it('should sort vulnerabilities by severity', () => {
       const vulnerabilities = [
-        { id: 'CVE-1', package: 'pkg1', installedVersion: '1.0', fixedVersion: '1.1', severity: 'LOW' },
-        { id: 'CVE-2', package: 'pkg2', installedVersion: '2.0', fixedVersion: '2.1', severity: 'CRITICAL' },
-        { id: 'CVE-3', package: 'pkg3', installedVersion: '3.0', fixedVersion: '3.1', severity: 'MEDIUM' },
-        { id: 'CVE-4', package: 'pkg4', installedVersion: '4.0', fixedVersion: '4.1', severity: 'HIGH' }
+        { id: 'CVE-1', package: 'pkg1', type: 'npm', installedVersion: '1.0', fixedVersion: '1.1', severity: 'LOW' },
+        { id: 'CVE-2', package: 'pkg2', type: 'npm', installedVersion: '2.0', fixedVersion: '2.1', severity: 'CRITICAL' },
+        { id: 'CVE-3', package: 'pkg3', type: 'npm', installedVersion: '3.0', fixedVersion: '3.1', severity: 'MEDIUM' },
+        { id: 'CVE-4', package: 'pkg4', type: 'npm', installedVersion: '4.0', fixedVersion: '4.1', severity: 'HIGH' }
       ];
 
       const result = formatter.formatTable(vulnerabilities, 20);
@@ -148,6 +150,7 @@ describe('CommentFormatter', () => {
       const vulnerabilities = Array.from({ length: 25 }, (_, i) => ({
         id: `CVE-2023-${i}`,
         package: `pkg${i}`,
+        type: 'npm',
         installedVersion: '1.0.0',
         fixedVersion: '1.0.1',
         severity: 'HIGH'
@@ -165,6 +168,7 @@ describe('CommentFormatter', () => {
       const vulnerabilities = Array.from({ length: 25 }, (_, i) => ({
         id: `CVE-2023-${i}`,
         package: `pkg${i}`,
+        type: 'npm',
         installedVersion: '1.0.0',
         fixedVersion: '1.0.1',
         severity: 'HIGH'
@@ -179,6 +183,7 @@ describe('CommentFormatter', () => {
       const vulnerabilities = Array.from({ length: 20 }, (_, i) => ({
         id: `CVE-2023-${i}`,
         package: `pkg${i}`,
+        type: 'npm',
         installedVersion: '1.0.0',
         fixedVersion: '1.0.1',
         severity: 'HIGH'
@@ -192,10 +197,10 @@ describe('CommentFormatter', () => {
 
     it('should include severity emoji in table rows', () => {
       const vulnerabilities = [
-        { id: 'CVE-1', package: 'pkg1', installedVersion: '1.0', fixedVersion: '1.1', severity: 'CRITICAL' },
-        { id: 'CVE-2', package: 'pkg2', installedVersion: '2.0', fixedVersion: '2.1', severity: 'HIGH' },
-        { id: 'CVE-3', package: 'pkg3', installedVersion: '3.0', fixedVersion: '3.1', severity: 'MEDIUM' },
-        { id: 'CVE-4', package: 'pkg4', installedVersion: '4.0', fixedVersion: '4.1', severity: 'LOW' }
+        { id: 'CVE-1', package: 'pkg1', type: 'npm', installedVersion: '1.0', fixedVersion: '1.1', severity: 'CRITICAL' },
+        { id: 'CVE-2', package: 'pkg2', type: 'gem', installedVersion: '2.0', fixedVersion: '2.1', severity: 'HIGH' },
+        { id: 'CVE-3', package: 'pkg3', type: 'pip', installedVersion: '3.0', fixedVersion: '3.1', severity: 'MEDIUM' },
+        { id: 'CVE-4', package: 'pkg4', type: 'npm', installedVersion: '4.0', fixedVersion: '4.1', severity: 'LOW' }
       ];
 
       const result = formatter.formatTable(vulnerabilities, 20);
@@ -272,6 +277,7 @@ describe('CommentFormatter', () => {
       const vulnerabilities = Array.from({ length: 25 }, (_, i) => ({
         id: `CVE-2023-${i}`,
         package: `pkg${i}`,
+        type: 'npm',
         installedVersion: '1.0.0',
         fixedVersion: '1.0.1',
         severity: 'HIGH'
@@ -295,6 +301,7 @@ describe('CommentFormatter', () => {
         {
           id: 'CVE-2023-1234',
           package: 'pkg|name',
+          type: 'npm',
           installedVersion: '1.0|beta',
           fixedVersion: '1.1|stable',
           severity: 'HIGH'
@@ -308,11 +315,11 @@ describe('CommentFormatter', () => {
       expect(result).toContain('1.0\\|beta');
       expect(result).toContain('1.1\\|stable');
       
-      // Should still be valid markdown table (6 unescaped pipes per row)
+      // Should still be valid markdown table (7 unescaped pipes per row for 6 columns)
       const lines = result.split('\n');
       const dataLine = lines.find(line => line.includes('CVE-2023-1234'));
       const unescapedPipes = (dataLine.match(/(?<!\\)\|/g) || []).length;
-      expect(unescapedPipes).toBe(6);
+      expect(unescapedPipes).toBe(7);
     });
 
     it('should handle empty string fields', () => {
@@ -320,6 +327,7 @@ describe('CommentFormatter', () => {
         {
           id: '',
           package: '',
+          type: '',
           installedVersion: '',
           fixedVersion: '',
           severity: 'HIGH'
@@ -343,6 +351,7 @@ describe('CommentFormatter', () => {
         {
           id: 'CVE-2023-1234',
           package: 'lodash',
+          type: 'npm',
           installedVersion: '4.17.19',
           fixedVersion: '4.17.21',
           severity: 'CRITICAL'
@@ -365,6 +374,7 @@ describe('CommentFormatter', () => {
       const vulnerabilities = Array.from({ length: 1000 }, (_, i) => ({
         id: `CVE-2023-${i}`,
         package: `pkg${i}`,
+        type: 'npm',
         installedVersion: '1.0.0',
         fixedVersion: '1.0.1',
         severity: i % 4 === 0 ? 'CRITICAL' : i % 4 === 1 ? 'HIGH' : i % 4 === 2 ? 'MEDIUM' : 'LOW'
@@ -384,12 +394,12 @@ describe('CommentFormatter', () => {
 
     it('should handle mixed severity levels correctly', () => {
       const vulnerabilities = [
-        { id: 'CVE-1', package: 'pkg1', installedVersion: '1.0', fixedVersion: '1.1', severity: 'LOW' },
-        { id: 'CVE-2', package: 'pkg2', installedVersion: '2.0', fixedVersion: '2.1', severity: 'CRITICAL' },
-        { id: 'CVE-3', package: 'pkg3', installedVersion: '3.0', fixedVersion: '3.1', severity: 'MEDIUM' },
-        { id: 'CVE-4', package: 'pkg4', installedVersion: '4.0', fixedVersion: '4.1', severity: 'HIGH' },
-        { id: 'CVE-5', package: 'pkg5', installedVersion: '5.0', fixedVersion: '5.1', severity: 'CRITICAL' },
-        { id: 'CVE-6', package: 'pkg6', installedVersion: '6.0', fixedVersion: '6.1', severity: 'LOW' }
+        { id: 'CVE-1', package: 'pkg1', type: 'npm', installedVersion: '1.0', fixedVersion: '1.1', severity: 'LOW' },
+        { id: 'CVE-2', package: 'pkg2', type: 'npm', installedVersion: '2.0', fixedVersion: '2.1', severity: 'CRITICAL' },
+        { id: 'CVE-3', package: 'pkg3', type: 'npm', installedVersion: '3.0', fixedVersion: '3.1', severity: 'MEDIUM' },
+        { id: 'CVE-4', package: 'pkg4', type: 'npm', installedVersion: '4.0', fixedVersion: '4.1', severity: 'HIGH' },
+        { id: 'CVE-5', package: 'pkg5', type: 'npm', installedVersion: '5.0', fixedVersion: '5.1', severity: 'CRITICAL' },
+        { id: 'CVE-6', package: 'pkg6', type: 'npm', installedVersion: '6.0', fixedVersion: '6.1', severity: 'LOW' }
       ];
 
       const counts = {
@@ -408,10 +418,10 @@ describe('CommentFormatter', () => {
       const formatted = formatter.format(results, 20);
 
       // Should show all severity levels in summary
-      expect(formatted).toContain('2 🔴 CRITICAL');
-      expect(formatted).toContain('1 🟠 HIGH');
-      expect(formatted).toContain('1 🟡 MEDIUM');
-      expect(formatted).toContain('2 ⚪ LOW');
+      expect(formatted).toContain('2 CRITICAL');
+      expect(formatted).toContain('1 HIGH');
+      expect(formatted).toContain('1 MEDIUM');
+      expect(formatted).toContain('2 LOW');
       
       // Should use red emoji as primary (highest severity)
       expect(formatted).toMatch(/^## 🔒 Trivy Security Scan\n\n🔴/);
@@ -419,8 +429,8 @@ describe('CommentFormatter', () => {
 
     it('should handle maxRows of 1', () => {
       const vulnerabilities = [
-        { id: 'CVE-1', package: 'pkg1', installedVersion: '1.0', fixedVersion: '1.1', severity: 'HIGH' },
-        { id: 'CVE-2', package: 'pkg2', installedVersion: '2.0', fixedVersion: '2.1', severity: 'HIGH' }
+        { id: 'CVE-1', package: 'pkg1', type: 'npm', installedVersion: '1.0', fixedVersion: '1.1', severity: 'HIGH' },
+        { id: 'CVE-2', package: 'pkg2', type: 'npm', installedVersion: '2.0', fixedVersion: '2.1', severity: 'HIGH' }
       ];
 
       const result = formatter.formatTable(vulnerabilities, 1);
@@ -440,6 +450,7 @@ describe('CommentFormatter', () => {
         {
           id: 'CVE-2023-1234',
           package: 'pkg<script>alert("xss")</script>',
+          type: 'npm',
           installedVersion: '1.0 & 2.0',
           fixedVersion: '3.0 > 2.0',
           severity: 'HIGH'
