@@ -1,0 +1,31 @@
+name: 'Trivy PR Decorator'
+description: 'Parse Trivy vulnerability scan results and post formatted comments to pull requests'
+author: 'Katanox'
+
+inputs:
+  results-file:
+    description: 'Path to the Trivy JSON results file'
+    required: true
+  github-token:
+    description: 'GitHub token for API authentication'
+    required: true
+  max-table-rows:
+    description: 'Maximum number of rows to display in the vulnerability details table'
+    required: false
+    default: '20'
+
+outputs:
+  total-vulnerabilities:
+    description: 'Total number of vulnerabilities found'
+  critical-count:
+    description: 'Number of CRITICAL vulnerabilities'
+  high-count:
+    description: 'Number of HIGH vulnerabilities'
+
+runs:
+  using: 'node20'
+  main: 'index.js'
+
+branding:
+  icon: 'shield'
+  color: 'red'
