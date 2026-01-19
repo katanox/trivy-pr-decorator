@@ -30174,17 +30174,18 @@ class CommentFormatter {
 
     // Generate table header
     let table = '### Vulnerability Details\n\n';
-    table += '| Severity | Package | Vulnerability | Installed | Fixed |\n';
-    table += '|----------|---------|---------------|-----------|-------|\n';
+    table += '| Severity | Package | Type | Vulnerability | Installed | Fixed |\n';
+    table += '|----------|---------|------|---------------|-----------|-------|\n';
 
     // Generate table rows
     for (const vuln of limited) {
       const severityWithEmoji = `${this.getSeverityEmoji(vuln.severity)} ${vuln.severity}`;
       const pkg = this.escapeTableCell(vuln.package);
+      const type = this.escapeTableCell(vuln.type);
       const id = this.escapeTableCell(vuln.id);
       const installed = this.escapeTableCell(vuln.installedVersion);
       const fixed = this.escapeTableCell(vuln.fixedVersion);
-      table += `| ${severityWithEmoji} | ${pkg} | ${id} | ${installed} | ${fixed} |\n`;
+      table += `| ${severityWithEmoji} | ${pkg} | ${type} | ${id} | ${installed} | ${fixed} |\n`;
     }
 
     // Add overflow message if there are more vulnerabilities
@@ -30204,6 +30205,10 @@ class CommentFormatter {
    */
   escapeTableCell(text) {
     // Replace pipe characters with escaped version to prevent breaking table structure
+    // Handle undefined or null values
+    if (text === undefined || text === null) {
+      return '';
+    }
     return text.replace(/\|/g, '\\|');
   }
 
@@ -30300,6 +30305,7 @@ class TrivyParser {
     // Iterate through all results and their vulnerabilities
     for (const result of trivyData.Results) {
       const target = result.Target || 'unknown';
+      const type = result.Type || 'unknown';
       const vulns = result.Vulnerabilities || [];
 
       for (const vuln of vulns) {
@@ -30314,6 +30320,7 @@ class TrivyParser {
         // Map Trivy fields to internal model
         const vulnerability = {
           target: target,
+          type: type,
           id: vuln.VulnerabilityID || '',
           package: vuln.PkgName || '',
           installedVersion: vuln.InstalledVersion || '',

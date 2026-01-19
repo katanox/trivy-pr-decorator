@@ -47,6 +47,7 @@ class TrivyParser {
     // Iterate through all results and their vulnerabilities
     for (const result of trivyData.Results) {
       const target = result.Target || 'unknown';
+      const type = result.Type || 'unknown';
       const vulns = result.Vulnerabilities || [];
 
       for (const vuln of vulns) {
@@ -61,6 +62,7 @@ class TrivyParser {
         // Map Trivy fields to internal model
         const vulnerability = {
           target: target,
+          type: type,
           id: vuln.VulnerabilityID || '',
           package: vuln.PkgName || '',
           installedVersion: vuln.InstalledVersion || '',

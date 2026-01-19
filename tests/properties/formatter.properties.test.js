@@ -279,6 +279,7 @@ describe('Formatter Property Tests', () => {
       target: fc.string(),
       id: fc.string(),
       package: fc.string(),
+      type: fc.string(),
       installedVersion: fc.string(),
       fixedVersion: fc.string(),
       severity: fc.constantFrom('CRITICAL', 'HIGH', 'MEDIUM', 'LOW'),
@@ -509,6 +510,7 @@ describe('Formatter Property Tests', () => {
       target: fc.string(),
       id: fc.string(),
       package: fc.string(),
+      type: fc.string(),
       installedVersion: fc.string(),
       fixedVersion: fc.string(),
       severity: fc.constantFrom('CRITICAL', 'HIGH', 'MEDIUM', 'LOW'),
@@ -719,6 +721,7 @@ describe('Formatter Property Tests', () => {
       target: fc.string(),
       id: fc.string(),
       package: fc.string(),
+      type: fc.string(),
       installedVersion: fc.string(),
       fixedVersion: fc.string(),
       severity: fc.constantFrom('CRITICAL', 'HIGH', 'MEDIUM', 'LOW'),
@@ -836,7 +839,7 @@ describe('Formatter Property Tests', () => {
 
             // Verify the formatted output includes a table
             expect(formatted).toContain('### Vulnerability Details');
-            expect(formatted).toContain('| Severity | Package | Vulnerability | Installed | Fixed |');
+            expect(formatted).toContain('| Severity | Package | Type | Vulnerability | Installed | Fixed |');
           }
         ),
         { numRuns: 100 }
@@ -867,7 +870,7 @@ describe('Formatter Property Tests', () => {
             expect(lines.length).toBeGreaterThanOrEqual(4);
             
             // Verify separator line exists
-            expect(table).toContain('|----------|---------|---------------|-----------|-------|');
+            expect(table).toContain('|----------|---------|------|---------------|-----------|-------|');
           }
         ),
         { numRuns: 100 }
@@ -922,6 +925,7 @@ describe('Formatter Property Tests', () => {
       target: fc.string(),
       id: fc.string(),
       package: fc.string(),
+      type: fc.string(),
       installedVersion: fc.string(),
       fixedVersion: fc.string(),
       severity: fc.constantFrom('CRITICAL', 'HIGH', 'MEDIUM', 'LOW'),
@@ -1179,6 +1183,7 @@ describe('Formatter Property Tests', () => {
       target: fc.string(),
       id: fc.string(),
       package: fc.string(),
+      type: fc.string(),
       installedVersion: fc.string(),
       fixedVersion: fc.string(),
       severity: fc.constantFrom('CRITICAL', 'HIGH', 'MEDIUM', 'LOW'),
@@ -1195,7 +1200,7 @@ describe('Formatter Property Tests', () => {
             const table = formatter.formatTable(vulnerabilities, maxRows);
 
             // Verify all required columns are present in the header
-            expect(table).toContain('| Severity | Package | Vulnerability | Installed | Fixed |');
+            expect(table).toContain('| Severity | Package | Type | Vulnerability | Installed | Fixed |');
           }
         ),
         { numRuns: 100 }
@@ -1212,7 +1217,7 @@ describe('Formatter Property Tests', () => {
             const table = formatter.formatTable(vulnerabilities, maxRows);
 
             // Verify the separator row is present
-            expect(table).toContain('|----------|---------|---------------|-----------|-------|');
+            expect(table).toContain('|----------|---------|------|---------------|-----------|-------|');
           }
         ),
         { numRuns: 100 }
@@ -1387,12 +1392,12 @@ describe('Formatter Property Tests', () => {
               line.includes('LOW')
             );
 
-            // Verify each data line has the correct number of unescaped pipes (6 for 5 columns)
+            // Verify each data line has the correct number of unescaped pipes (7 for 6 columns)
             // Count only pipes that are not escaped (not preceded by backslash)
             dataLines.forEach(line => {
               // Count unescaped pipes: pipes not preceded by backslash
               const unescapedPipes = (line.match(/(?<!\\)\|/g) || []).length;
-              expect(unescapedPipes).toBe(6); // 5 columns = 6 pipes
+              expect(unescapedPipes).toBe(7); // 6 columns = 7 pipes
             });
           }
         ),
@@ -1460,6 +1465,7 @@ describe('Formatter Property Tests', () => {
       target: fc.string(),
       id: fc.string(),
       package: fc.string(),
+      type: fc.string(),
       installedVersion: fc.string(),
       fixedVersion: fc.string(),
       severity: fc.constantFrom('CRITICAL', 'HIGH', 'MEDIUM', 'LOW'),

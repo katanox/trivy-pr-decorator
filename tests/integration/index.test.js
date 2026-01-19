@@ -46,6 +46,7 @@ describe('Integration Tests - Main Workflow', () => {
         Results: [
           {
             Target: 'package-lock.json',
+            Type: 'npm',
             Vulnerabilities: [
               {
                 VulnerabilityID: 'CVE-2023-1234',
@@ -119,6 +120,7 @@ describe('Integration Tests - Main Workflow', () => {
         Results: [
           {
             Target: 'Dockerfile',
+            Type: 'alpine',
             Vulnerabilities: [
               {
                 VulnerabilityID: 'CVE-2023-9999',
@@ -215,6 +217,7 @@ describe('Integration Tests - Main Workflow', () => {
         Results: [
           {
             Target: 'test',
+            Type: 'npm',
             Vulnerabilities: vulnerabilities
           }
         ]
@@ -294,6 +297,7 @@ describe('Integration Tests - Main Workflow', () => {
         Results: [
           {
             Target: 'test',
+            Type: 'npm',
             Vulnerabilities: [
               { VulnerabilityID: 'CVE-1', PkgName: 'pkg1', InstalledVersion: '1.0', Severity: 'CRITICAL', Title: 'Critical', FixedVersion: '1.1' },
               { VulnerabilityID: 'CVE-2', PkgName: 'pkg2', InstalledVersion: '1.0', Severity: 'CRITICAL', Title: 'Critical', FixedVersion: '1.1' },

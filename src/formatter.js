@@ -76,17 +76,18 @@ class CommentFormatter {
 
     // Generate table header
     let table = '### Vulnerability Details\n\n';
-    table += '| Severity | Package | Vulnerability | Installed | Fixed |\n';
-    table += '|----------|---------|---------------|-----------|-------|\n';
+    table += '| Severity | Package | Type | Vulnerability | Installed | Fixed |\n';
+    table += '|----------|---------|------|---------------|-----------|-------|\n';
 
     // Generate table rows
     for (const vuln of limited) {
       const severityWithEmoji = `${this.getSeverityEmoji(vuln.severity)} ${vuln.severity}`;
       const pkg = this.escapeTableCell(vuln.package);
+      const type = this.escapeTableCell(vuln.type);
       const id = this.escapeTableCell(vuln.id);
       const installed = this.escapeTableCell(vuln.installedVersion);
       const fixed = this.escapeTableCell(vuln.fixedVersion);
-      table += `| ${severityWithEmoji} | ${pkg} | ${id} | ${installed} | ${fixed} |\n`;
+      table += `| ${severityWithEmoji} | ${pkg} | ${type} | ${id} | ${installed} | ${fixed} |\n`;
     }
 
     // Add overflow message if there are more vulnerabilities
@@ -106,6 +107,10 @@ class CommentFormatter {
    */
   escapeTableCell(text) {
     // Replace pipe characters with escaped version to prevent breaking table structure
+    // Handle undefined or null values
+    if (text === undefined || text === null) {
+      return '';
+    }
     return text.replace(/\|/g, '\\|');
   }
 

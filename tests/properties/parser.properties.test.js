@@ -39,6 +39,7 @@ describe('Parser Property Tests', () => {
     // Arbitrary for generating a result with target and vulnerabilities
     const resultArb = fc.record({
       Target: fc.option(fc.string(), { nil: undefined }),
+      Type: fc.option(fc.string(), { nil: undefined }),
       Vulnerabilities: fc.array(vulnerabilityArb, { minLength: 0, maxLength: 10 })
     });
 
@@ -70,6 +71,7 @@ describe('Parser Property Tests', () => {
             // Find the source vulnerability in the input data
             let sourceVuln = null;
             let sourceTarget = null;
+            let sourceType = null;
             let found = false;
 
             for (const res of trivyData.Results) {
@@ -82,6 +84,7 @@ describe('Parser Property Tests', () => {
                   ) {
                     sourceVuln = v;
                     sourceTarget = res.Target;
+                    sourceType = res.Type;
                     found = true;
                     break;
                   }
@@ -94,6 +97,7 @@ describe('Parser Property Tests', () => {
             expect(vuln).toHaveProperty('target');
             expect(vuln).toHaveProperty('id');
             expect(vuln).toHaveProperty('package');
+            expect(vuln).toHaveProperty('type');
             expect(vuln).toHaveProperty('installedVersion');
             expect(vuln).toHaveProperty('fixedVersion');
             expect(vuln).toHaveProperty('severity');
@@ -104,10 +108,13 @@ describe('Parser Property Tests', () => {
               expect(vuln.target).toBe(sourceTarget || 'unknown');
               expect(vuln.id).toBe(sourceVuln.VulnerabilityID || '');
               expect(vuln.package).toBe(sourceVuln.PkgName || '');
+              expect(vuln.type).toBe(sourceType || 'unknown');
               expect(vuln.installedVersion).toBe(sourceVuln.InstalledVersion || '');
               expect(vuln.fixedVersion).toBe(sourceVuln.FixedVersion || 'N/A');
               expect(vuln.severity).toBe(sourceVuln.Severity.toUpperCase());
-              expect(vuln.title).toBe(sourceVuln.Title || '');
+              // Title can be any value including whitespace, so we need to match exactly
+              const expectedTitle = sourceVuln.Title !== undefined && sourceVuln.Title !== null ? sourceVuln.Title : '';
+              expect(vuln.title).toBe(expectedTitle);
             }
           });
         }),
@@ -184,6 +191,12 @@ describe('Parser Property Tests', () => {
           result.vulnerabilities.forEach((vuln) => {
             expect(vuln.target).toBeDefined();
             expect(typeof vuln.target).toBe('string');
+          });
+
+          // Verify that missing Type defaults to "unknown"
+          result.vulnerabilities.forEach((vuln) => {
+            expect(vuln.type).toBeDefined();
+            expect(typeof vuln.type).toBe('string');
           });
         }),
         { numRuns: 100 }
