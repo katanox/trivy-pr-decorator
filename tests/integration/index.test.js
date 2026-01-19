@@ -95,8 +95,8 @@ describe('Integration Tests - Main Workflow', () => {
       });
 
       expect(commentBody).toContain('🔒 Trivy Security Scan');
-      expect(commentBody).toContain('1 🔴 CRITICAL');
-      expect(commentBody).toContain('1 🟠 HIGH');
+      expect(commentBody).toContain('1 CRITICAL');
+      expect(commentBody).toContain('1 HIGH');
       expect(commentBody).toContain('2 total');
 
       // Verify GitHub API was called correctly
@@ -333,9 +333,9 @@ describe('Integration Tests - Main Workflow', () => {
 
       // Verify comment contains all expected data
       expect(commentBody).toContain('🔒 Trivy Security Scan');
-      expect(commentBody).toContain('2 🔴 CRITICAL');
-      expect(commentBody).toContain('1 🟠 HIGH');
-      expect(commentBody).toContain('1 🟡 MEDIUM');
+      expect(commentBody).toContain('2 CRITICAL');
+      expect(commentBody).toContain('1 HIGH');
+      expect(commentBody).toContain('1 MEDIUM');
       expect(commentBody).toContain('4 total');
       expect(commentBody).toContain('CVE-1');
       expect(commentBody).toContain('CVE-2');

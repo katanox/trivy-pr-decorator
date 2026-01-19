@@ -40,25 +40,25 @@ describe('Formatter Property Tests', () => {
 
           // Check each severity level
           if (counts.critical > 0) {
-            expect(summary).toContain(`${counts.critical} 🔴 CRITICAL`);
+            expect(summary).toContain(`${counts.critical} CRITICAL`);
           } else {
             expect(summary).not.toContain('CRITICAL');
           }
 
           if (counts.high > 0) {
-            expect(summary).toContain(`${counts.high} 🟠 HIGH`);
+            expect(summary).toContain(`${counts.high} HIGH`);
           } else {
             expect(summary).not.toContain('HIGH');
           }
 
           if (counts.medium > 0) {
-            expect(summary).toContain(`${counts.medium} 🟡 MEDIUM`);
+            expect(summary).toContain(`${counts.medium} MEDIUM`);
           } else {
             expect(summary).not.toContain('MEDIUM');
           }
 
           if (counts.low > 0) {
-            expect(summary).toContain(`${counts.low} ⚪ LOW`);
+            expect(summary).toContain(`${counts.low} LOW`);
           } else {
             expect(summary).not.toContain('LOW');
           }
@@ -1718,8 +1718,8 @@ describe('Formatter Property Tests', () => {
           // Verify the summary starts with the red emoji
           expect(summary).toMatch(/^🔴/);
           
-          // Verify the summary contains the critical count
-          expect(summary).toContain(`${counts.critical} 🔴 CRITICAL`);
+          // Verify the summary contains the critical count (without emoji)
+          expect(summary).toContain(`${counts.critical} CRITICAL`);
         }),
         { numRuns: 100 }
       );

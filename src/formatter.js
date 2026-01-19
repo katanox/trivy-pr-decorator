@@ -36,16 +36,16 @@ class CommentFormatter {
     // Build list of non-zero severity counts
     const severityParts = [];
     if (counts.critical > 0) {
-      severityParts.push(`${counts.critical} 🔴 CRITICAL`);
+      severityParts.push(`${counts.critical} CRITICAL`);
     }
     if (counts.high > 0) {
-      severityParts.push(`${counts.high} 🟠 HIGH`);
+      severityParts.push(`${counts.high} HIGH`);
     }
     if (counts.medium > 0) {
-      severityParts.push(`${counts.medium} 🟡 MEDIUM`);
+      severityParts.push(`${counts.medium} MEDIUM`);
     }
     if (counts.low > 0) {
-      severityParts.push(`${counts.low} ⚪ LOW`);
+      severityParts.push(`${counts.low} LOW`);
     }
 
     const severityList = severityParts.join(', ');

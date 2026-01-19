@@ -34,7 +34,7 @@ describe('CommentFormatter', () => {
       const result = formatter.format(results, 20);
 
       expect(result).toContain('## 🔒 Trivy Security Scan');
-      expect(result).toContain('🟠 **1 🟠 HIGH** (1 total)');
+      expect(result).toContain('🟠 **1 HIGH** (1 total)');
       expect(result).toContain('### Vulnerability Details');
       expect(result).toContain('| 🟠 HIGH | lodash | npm | CVE-2023-1234 | 4.17.19 | 4.17.21 |');
     });
@@ -70,8 +70,8 @@ describe('CommentFormatter', () => {
       const counts = { critical: 2, high: 1, medium: 0, low: 0, total: 3 };
       const result = formatter.formatSummary(counts);
       expect(result).toContain('🔴');
-      expect(result).toContain('2 🔴 CRITICAL');
-      expect(result).toContain('1 🟠 HIGH');
+      expect(result).toContain('2 CRITICAL');
+      expect(result).toContain('1 HIGH');
       expect(result).toContain('(3 total)');
     });
 
@@ -79,8 +79,8 @@ describe('CommentFormatter', () => {
       const counts = { critical: 0, high: 3, medium: 1, low: 0, total: 4 };
       const result = formatter.formatSummary(counts);
       expect(result).toContain('🟠');
-      expect(result).toContain('3 🟠 HIGH');
-      expect(result).toContain('1 🟡 MEDIUM');
+      expect(result).toContain('3 HIGH');
+      expect(result).toContain('1 MEDIUM');
       expect(result).not.toContain('CRITICAL');
     });
 
@@ -88,15 +88,15 @@ describe('CommentFormatter', () => {
       const counts = { critical: 0, high: 0, medium: 2, low: 1, total: 3 };
       const result = formatter.formatSummary(counts);
       expect(result).toContain('🟡');
-      expect(result).toContain('2 🟡 MEDIUM');
-      expect(result).toContain('1 ⚪ LOW');
+      expect(result).toContain('2 MEDIUM');
+      expect(result).toContain('1 LOW');
     });
 
     it('should only include non-zero severity counts', () => {
       const counts = { critical: 1, high: 0, medium: 0, low: 2, total: 3 };
       const result = formatter.formatSummary(counts);
-      expect(result).toContain('1 🔴 CRITICAL');
-      expect(result).toContain('2 ⚪ LOW');
+      expect(result).toContain('1 CRITICAL');
+      expect(result).toContain('2 LOW');
       expect(result).not.toContain('HIGH');
       expect(result).not.toContain('MEDIUM');
     });
@@ -418,10 +418,10 @@ describe('CommentFormatter', () => {
       const formatted = formatter.format(results, 20);
 
       // Should show all severity levels in summary
-      expect(formatted).toContain('2 🔴 CRITICAL');
-      expect(formatted).toContain('1 🟠 HIGH');
-      expect(formatted).toContain('1 🟡 MEDIUM');
-      expect(formatted).toContain('2 ⚪ LOW');
+      expect(formatted).toContain('2 CRITICAL');
+      expect(formatted).toContain('1 HIGH');
+      expect(formatted).toContain('1 MEDIUM');
+      expect(formatted).toContain('2 LOW');
       
       // Should use red emoji as primary (highest severity)
       expect(formatted).toMatch(/^## 🔒 Trivy Security Scan\n\n🔴/);
