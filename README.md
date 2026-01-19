@@ -147,6 +147,24 @@ cd trivy-pr-decorator
 
 # Install dependencies
 npm install
+
+# Build the action (required before committing)
+npm run build
+```
+
+### Building for Distribution
+
+This action uses [@vercel/ncc](https://github.com/vercel/ncc) to compile the code and dependencies into a single file for distribution.
+
+**Important:** You must run `npm run build` before committing changes. The `dist/` folder must be committed to the repository for the action to work.
+
+```bash
+# Build the action
+npm run build
+
+# Commit the dist folder
+git add dist/
+git commit -m "Build distribution"
 ```
 
 ### Running Tests

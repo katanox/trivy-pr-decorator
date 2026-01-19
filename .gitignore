@@ -1,8 +1,7 @@
 # Dependencies
 node_modules/
 
-# Build artifacts
-dist/
+# Build artifacts - keep dist/ for GitHub Actions
 build/
 *.log
 
