@@ -40,6 +40,8 @@ async function run() {
     core.setOutput('total-vulnerabilities', results.counts.total);
     core.setOutput('critical-count', results.counts.critical);
     core.setOutput('high-count', results.counts.high);
+    core.setOutput('medium-count', results.counts.medium);
+    core.setOutput('low-count', results.counts.low);
     core.info('Action completed successfully');
 
   } catch (error) {

@@ -72,6 +72,14 @@ The action provides outputs that can be used in subsequent steps:
         run: |
           echo "Found ${{ steps.trivy-decorator.outputs.critical-count }} critical vulnerabilities!"
           exit 1
+
+      - name: Display vulnerability summary
+        run: |
+          echo "Total vulnerabilities: ${{ steps.trivy-decorator.outputs.total-vulnerabilities }}"
+          echo "Critical: ${{ steps.trivy-decorator.outputs.critical-count }}"
+          echo "High: ${{ steps.trivy-decorator.outputs.high-count }}"
+          echo "Medium: ${{ steps.trivy-decorator.outputs.medium-count }}"
+          echo "Low: ${{ steps.trivy-decorator.outputs.low-count }}"
 ```
 
 ## Inputs
@@ -89,6 +97,8 @@ The action provides outputs that can be used in subsequent steps:
 | `total-vulnerabilities` | Total number of vulnerabilities found across all severity levels |
 | `critical-count` | Number of CRITICAL severity vulnerabilities |
 | `high-count` | Number of HIGH severity vulnerabilities |
+| `medium-count` | Number of MEDIUM severity vulnerabilities |
+| `low-count` | Number of LOW severity vulnerabilities |
 
 ## Permissions
 

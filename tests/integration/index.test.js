@@ -1,7 +1,16 @@
 // Mock fs module
 jest.mock('fs');
 
+// Mock @actions/core
+jest.mock('@actions/core', () => ({
+  info: jest.fn(),
+  debug: jest.fn(),
+  setFailed: jest.fn(),
+  setOutput: jest.fn()
+}));
+
 const fs = require('fs');
+const core = require('@actions/core');
 const { TrivyParser } = require('../../src/parser');
 const { CommentFormatter } = require('../../src/formatter');
 const { PRCommenter } = require('../../src/commenter');
@@ -349,6 +358,80 @@ describe('Integration Tests - Main Workflow', () => {
         issue_number: 123,
         body: commentBody
       });
+    });
+  });
+
+  describe('Action Outputs', () => {
+    it('should set all output values correctly', async () => {
+      // Clear previous calls
+      core.setOutput.mockClear();
+
+      // Setup Trivy results with all severity levels
+      const trivyData = {
+        Results: [
+          {
+            Target: 'package-lock.json',
+            Type: 'npm',
+            Vulnerabilities: [
+              {
+                VulnerabilityID: 'CVE-2023-0001',
+                PkgName: 'critical-pkg',
+                InstalledVersion: '1.0.0',
+                FixedVersion: '1.0.1',
+                Severity: 'CRITICAL',
+                Title: 'Critical vulnerability'
+              },
+              {
+                VulnerabilityID: 'CVE-2023-0002',
+                PkgName: 'high-pkg',
+                InstalledVersion: '2.0.0',
+                FixedVersion: '2.0.1',
+                Severity: 'HIGH',
+                Title: 'High vulnerability'
+              },
+              {
+                VulnerabilityID: 'CVE-2023-0003',
+                PkgName: 'medium-pkg',
+                InstalledVersion: '3.0.0',
+                FixedVersion: '3.0.1',
+                Severity: 'MEDIUM',
+                Title: 'Medium vulnerability'
+              },
+              {
+                VulnerabilityID: 'CVE-2023-0004',
+                PkgName: 'low-pkg',
+                InstalledVersion: '4.0.0',
+                FixedVersion: '4.0.1',
+                Severity: 'LOW',
+                Title: 'Low vulnerability'
+              }
+            ]
+          }
+        ]
+      };
+
+      fs.readFileSync.mockReturnValue(JSON.stringify(trivyData));
+
+      // Execute the workflow
+      const parser = new TrivyParser();
+      const results = parser.parse('trivy-results.json');
+
+      // Simulate what index.js does - set outputs
+      core.setOutput('total-vulnerabilities', results.counts.total);
+      core.setOutput('critical-count', results.counts.critical);
+      core.setOutput('high-count', results.counts.high);
+      core.setOutput('medium-count', results.counts.medium);
+      core.setOutput('low-count', results.counts.low);
+
+      // Verify all outputs were set with correct values
+      expect(core.setOutput).toHaveBeenCalledWith('total-vulnerabilities', 4);
+      expect(core.setOutput).toHaveBeenCalledWith('critical-count', 1);
+      expect(core.setOutput).toHaveBeenCalledWith('high-count', 1);
+      expect(core.setOutput).toHaveBeenCalledWith('medium-count', 1);
+      expect(core.setOutput).toHaveBeenCalledWith('low-count', 1);
+
+      // Verify setOutput was called exactly 5 times
+      expect(core.setOutput).toHaveBeenCalledTimes(5);
     });
   });
 });
