@@ -96,9 +96,11 @@ Minimal [workflow job permissions](https://docs.github.com/en/actions/using-jobs
 
 ```yaml
 permissions:
-  checks: write
   pull-requests: write
 ```
+
+**Why this permission is needed:**
+- `pull-requests: write` - Required to create and update comments on pull requests. This is the core functionality of the action.
 
 The following permissions are required in **private** GitHub repos:
 
@@ -106,9 +108,12 @@ The following permissions are required in **private** GitHub repos:
 permissions:
   contents: read
   issues: read
-  checks: write
   pull-requests: write
 ```
+
+**Additional permissions for private repos:**
+- `contents: read` - Required to access repository metadata and context in private repositories.
+- `issues: read` - Required to list existing comments on pull requests in private repositories (pull requests are implemented as issues in GitHub's API).
 
 ## Comment Format
 
