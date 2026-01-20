@@ -502,7 +502,7 @@ describe('Formatter Property Tests', () => {
    * Property 9: Comment includes scan header
    * **Validates: Requirements 5.4**
    * 
-   * For any formatted comment body, it should contain the header "🔒 Trivy Security Scan".
+   * For any formatted comment body, it should contain the header "🔒 Trivy Security Scan Report".
    */
   describe('Property 9: Comment includes scan header', () => {
     // Arbitrary for generating a vulnerability
@@ -545,7 +545,7 @@ describe('Formatter Property Tests', () => {
             const formatted = formatter.format(results, maxRows);
 
             // Verify the header is present
-            expect(formatted).toContain('🔒 Trivy Security Scan');
+            expect(formatted).toContain('🔒 Trivy Security Scan Report');
           }
         ),
         { numRuns: 100 }
@@ -569,7 +569,7 @@ describe('Formatter Property Tests', () => {
             const formatted = formatter.format(results, maxRows);
 
             // Verify the header is formatted as a markdown heading (##)
-            expect(formatted).toContain('## 🔒 Trivy Security Scan');
+            expect(formatted).toContain('## 🔒 Trivy Security Scan Report');
           }
         ),
         { numRuns: 100 }
@@ -593,7 +593,7 @@ describe('Formatter Property Tests', () => {
             const formatted = formatter.format(results, maxRows);
 
             // Verify the header appears at the start
-            expect(formatted.trim()).toMatch(/^## 🔒 Trivy Security Scan/);
+            expect(formatted.trim()).toMatch(/^## 🔒 Trivy Security Scan Report/);
           }
         ),
         { numRuns: 100 }
@@ -619,7 +619,7 @@ describe('Formatter Property Tests', () => {
             const formatted = formatter.format(results, maxRows);
 
             // Verify the header is present even with zero vulnerabilities
-            expect(formatted).toContain('🔒 Trivy Security Scan');
+            expect(formatted).toContain('🔒 Trivy Security Scan Report');
           }
         ),
         { numRuns: 100 }
@@ -642,7 +642,7 @@ describe('Formatter Property Tests', () => {
       const formatted = formatter.format(results, 20);
 
       // Verify the header is present
-      expect(formatted).toContain('## 🔒 Trivy Security Scan');
+      expect(formatted).toContain('## 🔒 Trivy Security Scan Report');
     });
 
     it('should include scan header with any severity distribution', () => {
@@ -669,7 +669,7 @@ describe('Formatter Property Tests', () => {
             const formatted = formatter.format(results, maxRows);
 
             // Verify the header is present
-            expect(formatted).toContain('## 🔒 Trivy Security Scan');
+            expect(formatted).toContain('## 🔒 Trivy Security Scan Report');
           }
         ),
         { numRuns: 100 }
@@ -700,7 +700,7 @@ describe('Formatter Property Tests', () => {
             const formatted = formatter.format(results, maxRows);
 
             // Verify the header is present regardless of maxRows
-            expect(formatted).toContain('## 🔒 Trivy Security Scan');
+            expect(formatted).toContain('## 🔒 Trivy Security Scan Report');
           }
         ),
         { numRuns: 100 }

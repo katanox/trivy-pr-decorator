@@ -8,14 +8,14 @@ describe('Commenter Property Tests', () => {
    * 
    * For any list of comments, filtering for bot comments with the scan header
    * should only return comments where user.type is "Bot" AND the body contains
-   * "🔒 Trivy Security Scan".
+   * "🔒 Trivy Security Scan Report".
    */
   describe('Property 10: Identify bot comments correctly', () => {
     // Arbitrary for generating user types
     const userTypeArb = fc.constantFrom('Bot', 'User', 'Organization');
 
     // Arbitrary for generating comment bodies with or without the scan header
-    const scanHeader = '🔒 Trivy Security Scan';
+    const scanHeader = '🔒 Trivy Security Scan Report';
     const commentBodyArb = fc.oneof(
       // Body with scan header
       fc.string().map(s => `${scanHeader}\n\n${s}`),
@@ -26,7 +26,7 @@ describe('Commenter Property Tests', () => {
         '🔒 Trivy',
         'Security Scan',
         '🔒 Security Scan',
-        'Trivy Security Scan' // Missing emoji
+        'Trivy Security Scan Report' // Missing emoji
       )
     );
 
@@ -344,10 +344,10 @@ describe('Commenter Property Tests', () => {
                 login: fc.string()
               }),
               body: fc.constantFrom(
-                '🔒 trivy security scan',  // lowercase
-                '🔒 TRIVY SECURITY SCAN',  // uppercase
-                '🔒 Trivy security scan',  // mixed case
-                'trivy security scan'       // no emoji
+                '🔒 trivy security scan report',  // lowercase
+                '🔒 TRIVY SECURITY SCAN REPORT',  // uppercase
+                '🔒 Trivy security scan report',  // mixed case
+                'trivy security scan report'       // no emoji
               )
             }),
             { minLength: 1, maxLength: 5 }

@@ -33,7 +33,7 @@ describe('CommentFormatter', () => {
 
       const result = formatter.format(results, 20);
 
-      expect(result).toContain('## 🔒 Trivy Security Scan');
+      expect(result).toContain('## 🔒 Trivy Security Scan Report');
       expect(result).toContain('🟠 **1 HIGH** (1 total)');
       expect(result).toContain('### Vulnerability Details');
       expect(result).toContain('| 🟠 HIGH | lodash | npm | CVE-2023-1234 | 4.17.19 | 4.17.21 |');
@@ -53,7 +53,7 @@ describe('CommentFormatter', () => {
 
       const result = formatter.format(results, 20);
 
-      expect(result).toContain('## 🔒 Trivy Security Scan');
+      expect(result).toContain('## 🔒 Trivy Security Scan Report');
       expect(result).toContain('✅ **No vulnerabilities found**');
       expect(result).not.toContain('### Vulnerability Details');
     });
@@ -424,7 +424,7 @@ describe('CommentFormatter', () => {
       expect(formatted).toContain('2 LOW');
       
       // Should use red emoji as primary (highest severity)
-      expect(formatted).toMatch(/^## 🔒 Trivy Security Scan\n\n🔴/);
+      expect(formatted).toMatch(/^## 🔒 Trivy Security Scan Report\n\n🔴/);
     });
 
     it('should handle maxRows of 1', () => {

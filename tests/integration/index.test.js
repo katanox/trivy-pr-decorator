@@ -94,7 +94,7 @@ describe('Integration Tests - Main Workflow', () => {
         total: 2
       });
 
-      expect(commentBody).toContain('🔒 Trivy Security Scan');
+      expect(commentBody).toContain('🔒 Trivy Security Scan Report');
       expect(commentBody).toContain('1 CRITICAL');
       expect(commentBody).toContain('1 HIGH');
       expect(commentBody).toContain('2 total');
@@ -141,7 +141,7 @@ describe('Integration Tests - Main Workflow', () => {
       const existingComment = {
         id: 789,
         user: { type: 'Bot' },
-        body: '## 🔒 Trivy Security Scan\n\nOld content'
+        body: '## 🔒 Trivy Security Scan Report\n\nOld content'
       };
 
       mockOctokit.rest.issues.listComments.mockResolvedValue({ data: [existingComment] });
@@ -332,7 +332,7 @@ describe('Integration Tests - Main Workflow', () => {
       });
 
       // Verify comment contains all expected data
-      expect(commentBody).toContain('🔒 Trivy Security Scan');
+      expect(commentBody).toContain('🔒 Trivy Security Scan Report');
       expect(commentBody).toContain('2 CRITICAL');
       expect(commentBody).toContain('1 HIGH');
       expect(commentBody).toContain('1 MEDIUM');

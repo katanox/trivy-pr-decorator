@@ -38,7 +38,7 @@ describe('PRCommenter', () => {
     it('should initialize with octokit and context', () => {
       expect(commenter.octokit).toBe(mockOctokit);
       expect(commenter.context).toBe(mockContext);
-      expect(commenter.scanHeader).toBe('🔒 Trivy Security Scan');
+      expect(commenter.scanHeader).toBe('🔒 Trivy Security Scan Report');
     });
   });
 
@@ -48,7 +48,7 @@ describe('PRCommenter', () => {
       mockOctokit.rest.issues.listComments.mockResolvedValue({ data: [] });
       mockOctokit.rest.issues.createComment.mockResolvedValue({});
 
-      const commentBody = '## 🔒 Trivy Security Scan\n\nTest comment';
+      const commentBody = '## 🔒 Trivy Security Scan Report\n\nTest comment';
 
       await commenter.postOrUpdateComment(commentBody);
 
@@ -76,7 +76,7 @@ describe('PRCommenter', () => {
       const existingComment = {
         id: 456,
         user: { type: 'Bot', login: 'github-actions[bot]' },
-        body: '## 🔒 Trivy Security Scan\n\nOld comment'
+        body: '## 🔒 Trivy Security Scan Report\n\nOld comment'
       };
 
       mockOctokit.rest.issues.listComments.mockResolvedValue({
@@ -84,7 +84,7 @@ describe('PRCommenter', () => {
       });
       mockOctokit.rest.issues.updateComment.mockResolvedValue({});
 
-      const commentBody = '## 🔒 Trivy Security Scan\n\nNew comment';
+      const commentBody = '## 🔒 Trivy Security Scan Report\n\nNew comment';
 
       await commenter.postOrUpdateComment(commentBody);
 
@@ -113,19 +113,19 @@ describe('PRCommenter', () => {
         {
           id: 111,
           user: { type: 'Bot', login: 'github-actions[bot]' },
-          body: '## 🔒 Trivy Security Scan\n\nFirst comment'
+          body: '## 🔒 Trivy Security Scan Report\n\nFirst comment'
         },
         {
           id: 222,
           user: { type: 'Bot', login: 'github-actions[bot]' },
-          body: '## 🔒 Trivy Security Scan\n\nSecond comment'
+          body: '## 🔒 Trivy Security Scan Report\n\nSecond comment'
         }
       ];
 
       mockOctokit.rest.issues.listComments.mockResolvedValue({ data: comments });
       mockOctokit.rest.issues.updateComment.mockResolvedValue({});
 
-      const commentBody = '## 🔒 Trivy Security Scan\n\nUpdated comment';
+      const commentBody = '## 🔒 Trivy Security Scan Report\n\nUpdated comment';
 
       await commenter.postOrUpdateComment(commentBody);
 
@@ -164,14 +164,14 @@ describe('PRCommenter', () => {
         {
           id: 789,
           user: { type: 'User', login: 'john-doe' },
-          body: '## 🔒 Trivy Security Scan\n\nUser comment'
+          body: '## 🔒 Trivy Security Scan Report\n\nUser comment'
         }
       ];
 
       mockOctokit.rest.issues.listComments.mockResolvedValue({ data: comments });
       mockOctokit.rest.issues.createComment.mockResolvedValue({});
 
-      const commentBody = '## 🔒 Trivy Security Scan\n\nBot comment';
+      const commentBody = '## 🔒 Trivy Security Scan Report\n\nBot comment';
 
       await commenter.postOrUpdateComment(commentBody);
 
@@ -193,7 +193,7 @@ describe('PRCommenter', () => {
       mockOctokit.rest.issues.listComments.mockResolvedValue({ data: comments });
       mockOctokit.rest.issues.createComment.mockResolvedValue({});
 
-      const commentBody = '## 🔒 Trivy Security Scan\n\nNew scan comment';
+      const commentBody = '## 🔒 Trivy Security Scan Report\n\nNew scan comment';
 
       await commenter.postOrUpdateComment(commentBody);
 
@@ -216,7 +216,7 @@ describe('PRCommenter', () => {
       const botComment = {
         id: 123,
         user: { type: 'Bot', login: 'github-actions[bot]' },
-        body: '## 🔒 Trivy Security Scan\n\nTest'
+        body: '## 🔒 Trivy Security Scan Report\n\nTest'
       };
 
       mockOctokit.rest.issues.listComments.mockResolvedValue({
@@ -233,7 +233,7 @@ describe('PRCommenter', () => {
         {
           id: 123,
           user: { type: 'User', login: 'john-doe' },
-          body: '## 🔒 Trivy Security Scan\n\nUser comment'
+          body: '## 🔒 Trivy Security Scan Report\n\nUser comment'
         }
       ];
 
@@ -352,7 +352,7 @@ describe('PRCommenter', () => {
       const existingComment = {
         id: 456,
         user: { type: 'Bot', login: 'github-actions[bot]' },
-        body: '## 🔒 Trivy Security Scan\n\nOld'
+        body: '## 🔒 Trivy Security Scan Report\n\nOld'
       };
 
       mockOctokit.rest.issues.listComments.mockResolvedValue({
