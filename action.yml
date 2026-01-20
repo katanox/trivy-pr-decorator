@@ -21,6 +21,10 @@ outputs:
     description: 'Number of CRITICAL vulnerabilities'
   high-count:
     description: 'Number of HIGH vulnerabilities'
+  medium-count:
+    description: 'Number of MEDIUM vulnerabilities'
+  low-count:
+    description: 'Number of LOW vulnerabilities'
 
 runs:
   using: 'node20'

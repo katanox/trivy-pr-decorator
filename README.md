@@ -1,13 +1,13 @@
 # Trivy PR Decorator
 
-A GitHub Action that parses [Trivy](https://github.com/aquasecurity/trivy) vulnerability scan results and posts beautifully formatted comments to pull requests. Keep your team informed about security vulnerabilities with clear, emoji-based summaries and detailed vulnerability tables.
+A GitHub Action that parses [Trivy](https://github.com/aquasecurity/trivy-action) vulnerability scan results and posts beautifully formatted comments to pull requests. Keep your team informed about security vulnerabilities with clear summaries and detailed vulnerability tables.
 
 ## Features
 
 - 🎯 **Clear Visual Indicators**: Emoji-based severity indicators (🔴 CRITICAL, 🟠 HIGH, 🟡 MEDIUM, ⚪ LOW)
 - 📊 **Detailed Vulnerability Tables**: Sortable tables with package names, CVE IDs, and version information
 - 🔄 **Smart Comment Management**: Updates existing comments instead of creating duplicates
-- ⚙️ **Configurable**: Customize table size and other display options
+- ⚙️ **Configurable**: Customize table size
 - 🚀 **Easy Integration**: Works seamlessly with existing Trivy scan workflows
 
 ## Usage
@@ -25,10 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.33.1
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -36,7 +36,7 @@ jobs:
           output: 'trivy-results.json'
 
       - name: Decorate PR with scan results
-        uses: katanox/trivy-pr-decorator@v1
+        uses: katanox/trivy-pr-decorator@v1.0.0
         with:
           results-file: 'trivy-results.json'
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -62,7 +62,7 @@ The action provides outputs that can be used in subsequent steps:
 ```yaml
       - name: Decorate PR with scan results
         id: trivy-decorator
-        uses: katanox/trivy-pr-decorator@v1
+        uses: katanox/trivy-pr-decorator@v1.0.0
         with:
           results-file: 'trivy-results.json'
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -72,6 +72,14 @@ The action provides outputs that can be used in subsequent steps:
         run: |
           echo "Found ${{ steps.trivy-decorator.outputs.critical-count }} critical vulnerabilities!"
           exit 1
+
+      - name: Display vulnerability summary
+        run: |
+          echo "Total vulnerabilities: ${{ steps.trivy-decorator.outputs.total-vulnerabilities }}"
+          echo "Critical: ${{ steps.trivy-decorator.outputs.critical-count }}"
+          echo "High: ${{ steps.trivy-decorator.outputs.high-count }}"
+          echo "Medium: ${{ steps.trivy-decorator.outputs.medium-count }}"
+          echo "Low: ${{ steps.trivy-decorator.outputs.low-count }}"
 ```
 
 ## Inputs
@@ -89,6 +97,33 @@ The action provides outputs that can be used in subsequent steps:
 | `total-vulnerabilities` | Total number of vulnerabilities found across all severity levels |
 | `critical-count` | Number of CRITICAL severity vulnerabilities |
 | `high-count` | Number of HIGH severity vulnerabilities |
+| `medium-count` | Number of MEDIUM severity vulnerabilities |
+| `low-count` | Number of LOW severity vulnerabilities |
+
+## Permissions
+
+Minimal [workflow job permissions](https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs#example-setting-permissions-for-a-specific-job) required by this action in **public** GitHub repositories are:
+
+```yaml
+permissions:
+  pull-requests: write
+```
+
+**Why this permission is needed:**
+- `pull-requests: write` - Required to create and update comments on pull requests. This is the core functionality of the action.
+
+The following permissions are required in **private** GitHub repos:
+
+```yaml
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+```
+
+**Additional permissions for private repos:**
+- `contents: read` - Required to access repository metadata and context in private repositories.
+- `issues: read` - Required to list existing comments on pull requests in private repositories (pull requests are implemented as issues in GitHub's API).
 
 ## Comment Format
 
@@ -97,7 +132,7 @@ The action posts a formatted comment to your pull request that looks like this:
 ### Example: Vulnerabilities Found
 
 ```markdown
-## 🔒 Trivy Security Scan
+## 🔒 Trivy Security Scan Report
 
 🔴 **3 CRITICAL, 5 HIGH, 12 MEDIUM, 8 LOW** (28 total)
 
@@ -117,7 +152,7 @@ The action posts a formatted comment to your pull request that looks like this:
 ### Example: No Vulnerabilities
 
 ```markdown
-## 🔒 Trivy Security Scan
+## 🔒 Trivy Security Scan Report
 
 ✅ **No vulnerabilities found**
 ```
@@ -234,7 +269,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- [Trivy](https://github.com/aquasecurity/trivy) - The amazing vulnerability scanner this action is built for
+- [Trivy Action](https://github.com/aquasecurity/trivy-action) - The vulnerability scanner GitHub Action this decorator is built for
 - [GitHub Actions](https://github.com/features/actions) - The platform that makes this automation possible
 
 ## Support

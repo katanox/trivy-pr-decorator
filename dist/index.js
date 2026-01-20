@@ -29939,7 +29939,7 @@ class PRCommenter {
   constructor(octokit, context) {
     this.octokit = octokit;
     this.context = context;
-    this.scanHeader = '🔒 Trivy Security Scan';
+    this.scanHeader = '🔒 Trivy Security Scan Report';
   }
 
   /**
@@ -30109,7 +30109,7 @@ class CommentFormatter {
    * @returns {string} Formatted markdown comment
    */
   format(results, maxRows) {
-    const header = '## 🔒 Trivy Security Scan\n\n';
+    const header = '## 🔒 Trivy Security Scan Report\n\n';
     const summary = this.formatSummary(results.counts);
     const table = this.formatTable(results.vulnerabilities, maxRows);
     
@@ -32316,6 +32316,8 @@ async function run() {
     core.setOutput('total-vulnerabilities', results.counts.total);
     core.setOutput('critical-count', results.counts.critical);
     core.setOutput('high-count', results.counts.high);
+    core.setOutput('medium-count', results.counts.medium);
+    core.setOutput('low-count', results.counts.low);
     core.info('Action completed successfully');
 
   } catch (error) {

@@ -11,7 +11,7 @@ class CommentFormatter {
    * @returns {string} Formatted markdown comment
    */
   format(results, maxRows) {
-    const header = '## 🔒 Trivy Security Scan\n\n';
+    const header = '## 🔒 Trivy Security Scan Report\n\n';
     const summary = this.formatSummary(results.counts);
     const table = this.formatTable(results.vulnerabilities, maxRows);
     
