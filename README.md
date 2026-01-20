@@ -121,11 +121,12 @@ The action posts a formatted comment to your pull request that looks like this:
 
 ### Example: Vulnerabilities Found
 
+```markdown
 ## 🔒 Trivy Security Scan Report
 
 🔴 **3 CRITICAL, 5 HIGH, 12 MEDIUM, 8 LOW** (28 total)
 
-#### Vulnerability Details
+### Vulnerability Details
 
 | Severity | Package | Type | Vulnerability | Installed | Fixed |
 |----------|---------|------|---------------|-----------|-------|
@@ -136,16 +137,15 @@ The action posts a formatted comment to your pull request that looks like this:
 | 🟠 HIGH | webpack | npm | CVE-2023-7890 | 5.75.0 | 5.76.0 |
 
 *... and 23 more*
-
----
+```
 
 ### Example: No Vulnerabilities
 
+```markdown
 ## 🔒 Trivy Security Scan Report
 
 ✅ **No vulnerabilities found**
-
----
+```
 
 ## How It Works
 
