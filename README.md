@@ -1,13 +1,13 @@
 # Trivy PR Decorator
 
-A GitHub Action that parses [Trivy](https://github.com/aquasecurity/trivy) vulnerability scan results and posts beautifully formatted comments to pull requests. Keep your team informed about security vulnerabilities with clear, emoji-based summaries and detailed vulnerability tables.
+A GitHub Action that parses [Trivy](https://github.com/aquasecurity/trivy-action) vulnerability scan results and posts beautifully formatted comments to pull requests. Keep your team informed about security vulnerabilities with clear summaries and detailed vulnerability tables.
 
 ## Features
 
 - 🎯 **Clear Visual Indicators**: Emoji-based severity indicators (🔴 CRITICAL, 🟠 HIGH, 🟡 MEDIUM, ⚪ LOW)
 - 📊 **Detailed Vulnerability Tables**: Sortable tables with package names, CVE IDs, and version information
 - 🔄 **Smart Comment Management**: Updates existing comments instead of creating duplicates
-- ⚙️ **Configurable**: Customize table size and other display options
+- ⚙️ **Configurable**: Customize table size
 - 🚀 **Easy Integration**: Works seamlessly with existing Trivy scan workflows
 
 ## Usage
@@ -259,7 +259,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- [Trivy](https://github.com/aquasecurity/trivy) - The amazing vulnerability scanner this action is built for
+- [Trivy Action](https://github.com/aquasecurity/trivy-action) - The vulnerability scanner GitHub Action this decorator is built for
 - [GitHub Actions](https://github.com/features/actions) - The platform that makes this automation possible
 
 ## Support
