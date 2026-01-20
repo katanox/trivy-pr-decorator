@@ -25,10 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.33.1
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -36,7 +36,7 @@ jobs:
           output: 'trivy-results.json'
 
       - name: Decorate PR with scan results
-        uses: katanox/trivy-pr-decorator@v1
+        uses: katanox/trivy-pr-decorator@v1.0.0
         with:
           results-file: 'trivy-results.json'
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -62,7 +62,7 @@ The action provides outputs that can be used in subsequent steps:
 ```yaml
       - name: Decorate PR with scan results
         id: trivy-decorator
-        uses: katanox/trivy-pr-decorator@v1
+        uses: katanox/trivy-pr-decorator@v1.0.0
         with:
           results-file: 'trivy-results.json'
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -89,6 +89,26 @@ The action provides outputs that can be used in subsequent steps:
 | `total-vulnerabilities` | Total number of vulnerabilities found across all severity levels |
 | `critical-count` | Number of CRITICAL severity vulnerabilities |
 | `high-count` | Number of HIGH severity vulnerabilities |
+
+## Permissions
+
+Minimal [workflow job permissions](https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs#example-setting-permissions-for-a-specific-job) required by this action in **public** GitHub repositories are:
+
+```yaml
+permissions:
+  checks: write
+  pull-requests: write
+```
+
+The following permissions are required in **private** GitHub repos:
+
+```yaml
+permissions:
+  contents: read
+  issues: read
+  checks: write
+  pull-requests: write
+```
 
 ## Comment Format
 
