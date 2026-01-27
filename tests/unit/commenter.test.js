@@ -60,7 +60,10 @@ describe('PRCommenter', () => {
 
       const commentBody = '## 🔒 Trivy Security Scan Report\n\nTest comment';
 
-      await commenter.postOrUpdateComment(commentBody);
+      const result = await commenter.postOrUpdateComment(commentBody);
+
+      // Verify it returns true when posted
+      expect(result).toBe(true);
 
       // Verify listComments was called
       expect(mockOctokit.rest.issues.listComments).toHaveBeenCalledWith({
@@ -96,7 +99,10 @@ describe('PRCommenter', () => {
 
       const commentBody = '## 🔒 Trivy Security Scan Report\n\nNew comment';
 
-      await commenter.postOrUpdateComment(commentBody);
+      const result = await commenter.postOrUpdateComment(commentBody);
+
+      // Verify it returns true when updated
+      expect(result).toBe(true);
 
       // Verify listComments was called
       expect(mockOctokit.rest.issues.listComments).toHaveBeenCalledWith({
@@ -163,7 +169,10 @@ describe('PRCommenter', () => {
 
       const commenterNoPR = new PRCommenter(mockOctokit, noPRContext, mockCore);
 
-      await commenterNoPR.postOrUpdateComment('Test comment');
+      const result = await commenterNoPR.postOrUpdateComment('Test comment');
+
+      // Verify it returns false when skipped
+      expect(result).toBe(false);
 
       // Verify info log was called with graceful exit message
       expect(mockCore.info).toHaveBeenCalledWith(

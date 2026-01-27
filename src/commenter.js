@@ -22,13 +22,14 @@ class PRCommenter {
    * Gracefully exits if not in PR context.
    * 
    * @param {string} body - The comment body to post or update
+   * @returns {Promise<boolean>} True if comment was posted/updated, false if skipped
    * @throws {Error} If API call fails
    */
   async postOrUpdateComment(body) {
     // Validate PR context - gracefully exit if not in PR
     if (!this.context.payload.pull_request) {
       this.core.info('Action only runs in pull request contexts, skipping');
-      return;
+      return false;
     }
 
     const existingComment = await this.findExistingComment();
@@ -38,6 +39,8 @@ class PRCommenter {
     } else {
       await this.createComment(body);
     }
+    
+    return true;
   }
 
   /**
