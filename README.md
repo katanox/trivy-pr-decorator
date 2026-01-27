@@ -137,6 +137,8 @@ jobs:
 5. The publishing workflow runs with base repository permissions
 6. It downloads both artifacts and posts the comment to the PR
 
+**Note:** This pattern also works with push events. When a push event is associated with a pull request (common in the workflow_run pattern), the action will automatically resolve the PR number from the event context and post the comment to the appropriate PR. If no PR context is available, the action will gracefully skip posting a comment.
+
 ### Using Action Outputs
 
 The action provides outputs that can be used in subsequent steps:
@@ -277,6 +279,17 @@ The action posts a formatted comment to your pull request that looks like this:
 7. **Cleanup**: Removes temporary artifact files
 
 The action intelligently identifies and updates existing comments from previous runs, ensuring your pull request stays clean and readable.
+
+### When the Action Runs
+
+The action will post comments in the following scenarios:
+- ✅ **Pull request events**: Direct PR workflows
+- ✅ **Push events with PR context**: When using the workflow_run pattern where push events are associated with a PR
+- ✅ **workflow_run events**: When artifacts contain PR context from the triggering workflow
+
+The action will gracefully skip posting comments (without failing) when:
+- ℹ️ No pull request context can be determined (e.g., push to a branch without an associated PR)
+- ℹ️ Running outside of a pull request context without explicit PR number resolution
 
 ## Development
 

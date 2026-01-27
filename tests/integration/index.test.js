@@ -290,7 +290,7 @@ describe('Integration Tests - Main Workflow', () => {
       await commenter.postOrUpdateComment('test body');
 
       // Verify info log was called
-      expect(core.info).toHaveBeenCalledWith('Action only runs in pull request contexts, skipping');
+      expect(core.info).toHaveBeenCalledWith('No pull request context found, skipping comment');
 
       // Verify no API calls were made
       expect(mockOctokit.rest.issues.listComments).not.toHaveBeenCalled();
@@ -588,7 +588,94 @@ describe('Integration Tests - Main Workflow', () => {
       await commenter.postOrUpdateComment('test body', null);
 
       // Verify info log was called
-      expect(core.info).toHaveBeenCalledWith('Action only runs in pull request contexts, skipping');
+      expect(core.info).toHaveBeenCalledWith('No pull request context found, skipping comment');
+
+      // Verify no API calls were made
+      expect(mockOctokit.rest.issues.listComments).not.toHaveBeenCalled();
+      expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
+    });
+
+    it('should post comment from push event with resolved PR context', async () => {
+      // Setup push event context (no pull_request in payload)
+      const pushContext = {
+        repo: {
+          owner: 'test-owner',
+          repo: 'test-repo'
+        },
+        payload: {
+          ref: 'refs/heads/main',
+          after: 'abc123'
+        },
+        eventName: 'push'
+      };
+
+      // Setup Trivy results
+      const trivyData = {
+        Results: [
+          {
+            Target: 'package.json',
+            Type: 'npm',
+            Vulnerabilities: [
+              {
+                VulnerabilityID: 'CVE-2023-3333',
+                PkgName: 'test-pkg',
+                InstalledVersion: '1.0.0',
+                FixedVersion: '1.0.1',
+                Severity: 'HIGH',
+                Title: 'Test vulnerability'
+              }
+            ]
+          }
+        ]
+      };
+
+      fs.readFileSync.mockReturnValue(JSON.stringify(trivyData));
+
+      // Setup GitHub API mock
+      mockOctokit.rest.issues.listComments.mockResolvedValue({ data: [] });
+      mockOctokit.rest.issues.createComment.mockResolvedValue({ data: { id: 777 } });
+
+      // Execute workflow with PR number resolved from event file
+      const parser = new TrivyParser();
+      const results = parser.parse('trivy-results.json');
+
+      const formatter = new CommentFormatter();
+      const commentBody = formatter.format(results, 20);
+
+      const commenter = new PRCommenter(mockOctokit, pushContext, core);
+      const resolvedPRNumber = 42; // PR number resolved from event file
+      await commenter.postOrUpdateComment(commentBody, resolvedPRNumber);
+
+      // Verify comment was posted to the resolved PR
+      expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        issue_number: resolvedPRNumber,
+        body: commentBody
+      });
+    });
+
+    it('should gracefully exit from push event without PR context', async () => {
+      // Setup push event context without PR
+      const pushNoPRContext = {
+        repo: {
+          owner: 'test-owner',
+          repo: 'test-repo'
+        },
+        payload: {
+          ref: 'refs/heads/main',
+          after: 'abc123'
+        },
+        eventName: 'push'
+      };
+
+      const commenter = new PRCommenter(mockOctokit, pushNoPRContext, core);
+
+      // Should gracefully exit when no PR number available
+      await commenter.postOrUpdateComment('test body', null);
+
+      // Verify info log was called
+      expect(core.info).toHaveBeenCalledWith('No pull request context found, skipping comment');
 
       // Verify no API calls were made
       expect(mockOctokit.rest.issues.listComments).not.toHaveBeenCalled();

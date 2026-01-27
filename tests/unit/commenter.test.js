@@ -176,7 +176,7 @@ describe('PRCommenter', () => {
 
       // Verify info log was called with graceful exit message
       expect(mockCore.info).toHaveBeenCalledWith(
-        'Action only runs in pull request contexts, skipping'
+        'No pull request context found, skipping comment'
       );
 
       // Verify no API calls were made
@@ -289,9 +289,42 @@ describe('PRCommenter', () => {
 
       expect(result).toBe(false);
       expect(mockCore.info).toHaveBeenCalledWith(
-        'Action only runs in pull request contexts, skipping'
+        'No pull request context found, skipping comment'
       );
       expect(mockOctokit.rest.issues.listComments).not.toHaveBeenCalled();
+    });
+
+    it('should post comment with explicit PR number from push event', async () => {
+      // Create context for push event (no pull_request in payload)
+      const pushContext = {
+        payload: {
+          ref: 'refs/heads/main'
+        },
+        repo: {
+          owner: 'test-owner',
+          repo: 'test-repo'
+        }
+      };
+
+      const commenterPush = new PRCommenter(mockOctokit, pushContext, mockCore);
+
+      mockOctokit.rest.issues.listComments.mockResolvedValue({ data: [] });
+      mockOctokit.rest.issues.createComment.mockResolvedValue({});
+
+      const commentBody = '## 🔒 Trivy Security Scan Report\n\nTest comment';
+      const resolvedPRNumber = 42; // PR number resolved from event file
+
+      const result = await commenterPush.postOrUpdateComment(commentBody, resolvedPRNumber);
+
+      expect(result).toBe(true);
+
+      // Verify createComment was called with resolved PR number
+      expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        issue_number: resolvedPRNumber,
+        body: commentBody
+      });
     });
 
     it('should update existing comment with explicit PR number', async () => {

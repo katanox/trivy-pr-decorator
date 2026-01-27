@@ -85,8 +85,12 @@ class ContextResolver {
       return null;
     }
 
-    // Handle push events (no PR context)
+    // Handle push events - attempt to extract PR context (workflow_run pattern)
     if (eventName === 'push') {
+      // In workflow_run pattern, push events may have PR context
+      if (event.pull_request?.number) {
+        return event.pull_request.number;
+      }
       return null;
     }
 

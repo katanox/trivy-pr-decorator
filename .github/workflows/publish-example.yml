@@ -85,3 +85,10 @@ jobs:
 # 5. Permissions:
 #    The publishing workflow needs pull-requests: write permission.
 #    For private repos, also add contents: read and issues: read.
+#
+# 6. Push Event Support:
+#    This pattern also works with push events. When the CI workflow is
+#    triggered by a push event associated with a PR, the action will
+#    automatically resolve the PR number from the event file and post
+#    the comment. If no PR context is available, the action gracefully
+#    skips posting without failing the workflow.

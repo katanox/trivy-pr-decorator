@@ -89,7 +89,7 @@ describe('ContextResolver', () => {
       expect(prNumber).toBe(42);
     });
 
-    it('should return null for push events', () => {
+    it('should return null for push events without PR context', () => {
       const event = {
         ref: 'refs/heads/main',
         after: 'abc123'
@@ -99,6 +99,21 @@ describe('ContextResolver', () => {
       const prNumber = resolver.extractPRNumber(event, 'push');
 
       expect(prNumber).toBeNull();
+    });
+
+    it('should extract PR number from push events with PR context (workflow_run pattern)', () => {
+      const event = {
+        ref: 'refs/heads/main',
+        after: 'abc123',
+        pull_request: {
+          number: 42
+        }
+      };
+
+      const resolver = new ContextResolver(mockContext);
+      const prNumber = resolver.extractPRNumber(event, 'push');
+
+      expect(prNumber).toBe(42);
     });
 
     it('should return null when pull_request is missing', () => {

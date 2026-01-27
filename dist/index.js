@@ -33417,10 +33417,10 @@ class PRCommenter {
 
   /**
    * Posts a new comment or updates an existing bot comment on the PR.
-   * Gracefully exits if not in PR context.
+   * Gracefully exits if no PR context can be determined.
    * 
    * @param {string} body - The comment body to post or update
-   * @param {number|null} prNumber - Optional PR number (for workflow_run context)
+   * @param {number|null} prNumber - Optional PR number (for workflow_run context or push events)
    * @returns {Promise<boolean>} True if comment was posted/updated, false if skipped
    * @throws {Error} If API call fails
    */
@@ -33428,9 +33428,9 @@ class PRCommenter {
     // Determine PR number from parameter or context
     const pr = prNumber || this.context.payload.pull_request?.number;
     
-    // Validate PR context - gracefully exit if not in PR
+    // Validate PR context - gracefully exit if no PR number available
     if (!pr) {
-      this.core.info('Action only runs in pull request contexts, skipping');
+      this.core.info('No pull request context found, skipping comment');
       return false;
     }
 
@@ -33675,8 +33675,12 @@ class ContextResolver {
       return null;
     }
 
-    // Handle push events (no PR context)
+    // Handle push events - attempt to extract PR context (workflow_run pattern)
     if (eventName === 'push') {
+      // In workflow_run pattern, push events may have PR context
+      if (event.pull_request?.number) {
+        return event.pull_request.number;
+      }
       return null;
     }
 
