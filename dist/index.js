@@ -33624,6 +33624,13 @@ class ContextResolver {
     } else {
       // Try to extract PR number from current context
       prNumber = this.extractPRNumber(this.context.payload, resolvedEventName);
+      
+      // If workflow_call and no PR found, check if there's a pull_request in the payload
+      // (workflow_call inherits the parent's context which may have PR data)
+      if (!prNumber && resolvedEventName === 'workflow_call' && this.context.payload.pull_request) {
+        prNumber = this.context.payload.pull_request.number;
+        core.info(`Found PR context from workflow_call parent: ${prNumber}`);
+      }
     }
 
     return {
