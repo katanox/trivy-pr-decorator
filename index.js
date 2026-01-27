@@ -32,7 +32,7 @@ async function run() {
     // Post or update comment
     core.info('Posting comment to pull request...');
     const octokit = github.getOctokit(config.githubToken);
-    const commenter = new PRCommenter(octokit, github.context);
+    const commenter = new PRCommenter(octokit, github.context, core);
     await commenter.postOrUpdateComment(commentBody);
     core.info('Successfully posted Trivy scan results');
 
