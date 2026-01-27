@@ -32,9 +32,12 @@ async function run() {
     // Post or update comment
     core.info('Posting comment to pull request...');
     const octokit = github.getOctokit(config.githubToken);
-    const commenter = new PRCommenter(octokit, github.context);
-    await commenter.postOrUpdateComment(commentBody);
-    core.info('Successfully posted Trivy scan results');
+    const commenter = new PRCommenter(octokit, github.context, core);
+    const posted = await commenter.postOrUpdateComment(commentBody);
+    
+    if (posted) {
+      core.info('Successfully posted Trivy scan results');
+    }
 
     // Set action outputs
     core.setOutput('total-vulnerabilities', results.counts.total);

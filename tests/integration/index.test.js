@@ -91,7 +91,7 @@ describe('Integration Tests - Main Workflow', () => {
       const formatter = new CommentFormatter();
       const commentBody = formatter.format(results, 20);
 
-      const commenter = new PRCommenter(mockOctokit, mockContext);
+      const commenter = new PRCommenter(mockOctokit, mockContext, core);
       await commenter.postOrUpdateComment(commentBody);
 
       // Verify results
@@ -163,7 +163,7 @@ describe('Integration Tests - Main Workflow', () => {
       const formatter = new CommentFormatter();
       const commentBody = formatter.format(results, 10);
 
-      const commenter = new PRCommenter(mockOctokit, mockContext);
+      const commenter = new PRCommenter(mockOctokit, mockContext, core);
       await commenter.postOrUpdateComment(commentBody);
 
       // Verify update was called, not create
@@ -196,7 +196,7 @@ describe('Integration Tests - Main Workflow', () => {
       const formatter = new CommentFormatter();
       const commentBody = formatter.format(results, 20);
 
-      const commenter = new PRCommenter(mockOctokit, mockContext);
+      const commenter = new PRCommenter(mockOctokit, mockContext, core);
       await commenter.postOrUpdateComment(commentBody);
 
       // Verify results
@@ -274,7 +274,7 @@ describe('Integration Tests - Main Workflow', () => {
       expect(() => parser.parse('invalid.json')).toThrow(/Invalid JSON in results file/);
     });
 
-    it('should propagate commenter errors when not in PR context', async () => {
+    it('should gracefully exit when not in PR context', async () => {
       // Remove PR context
       const noPRContext = {
         repo: {
@@ -284,16 +284,23 @@ describe('Integration Tests - Main Workflow', () => {
         payload: {}
       };
 
-      const commenter = new PRCommenter(mockOctokit, noPRContext);
+      const commenter = new PRCommenter(mockOctokit, noPRContext, core);
 
-      await expect(commenter.postOrUpdateComment('test body')).rejects.toThrow('Action must run in pull request context');
+      // Should not throw, but gracefully exit
+      await commenter.postOrUpdateComment('test body');
+
+      // Verify info log was called
+      expect(core.info).toHaveBeenCalledWith('Action only runs in pull request contexts, skipping');
+
+      // Verify no API calls were made
+      expect(mockOctokit.rest.issues.listComments).not.toHaveBeenCalled();
     });
 
     it('should propagate GitHub API errors', async () => {
       // Setup GitHub API to fail
       mockOctokit.rest.issues.listComments.mockRejectedValue(new Error('API rate limit exceeded'));
 
-      const commenter = new PRCommenter(mockOctokit, mockContext);
+      const commenter = new PRCommenter(mockOctokit, mockContext, core);
 
       await expect(commenter.postOrUpdateComment('test body')).rejects.toThrow(/Failed to list PR comments/);
     });
@@ -328,7 +335,7 @@ describe('Integration Tests - Main Workflow', () => {
       const formatter = new CommentFormatter();
       const commentBody = formatter.format(results, 20);
 
-      const commenter = new PRCommenter(mockOctokit, mockContext);
+      const commenter = new PRCommenter(mockOctokit, mockContext, core);
       await commenter.postOrUpdateComment(commentBody);
 
       // Verify data flows correctly

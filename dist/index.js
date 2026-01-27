@@ -29935,23 +29935,28 @@ class PRCommenter {
    * 
    * @param {import('@octokit/rest').Octokit} octokit - Authenticated Octokit instance
    * @param {import('@actions/github').context} context - GitHub Actions context
+   * @param {import('@actions/core')} core - Actions core for logging
    */
-  constructor(octokit, context) {
+  constructor(octokit, context, core) {
     this.octokit = octokit;
     this.context = context;
+    this.core = core;
     this.scanHeader = '🔒 Trivy Security Scan Report';
   }
 
   /**
    * Posts a new comment or updates an existing bot comment on the PR.
+   * Gracefully exits if not in PR context.
    * 
    * @param {string} body - The comment body to post or update
-   * @throws {Error} If not in PR context or API call fails
+   * @returns {Promise<boolean>} True if comment was posted/updated, false if skipped
+   * @throws {Error} If API call fails
    */
   async postOrUpdateComment(body) {
-    // Validate PR context
+    // Validate PR context - gracefully exit if not in PR
     if (!this.context.payload.pull_request) {
-      throw new Error('Action must run in pull request context');
+      this.core.info('Action only runs in pull request contexts, skipping');
+      return false;
     }
 
     const existingComment = await this.findExistingComment();
@@ -29961,6 +29966,8 @@ class PRCommenter {
     } else {
       await this.createComment(body);
     }
+    
+    return true;
   }
 
   /**
@@ -32308,9 +32315,12 @@ async function run() {
     // Post or update comment
     core.info('Posting comment to pull request...');
     const octokit = github.getOctokit(config.githubToken);
-    const commenter = new PRCommenter(octokit, github.context);
-    await commenter.postOrUpdateComment(commentBody);
-    core.info('Successfully posted Trivy scan results');
+    const commenter = new PRCommenter(octokit, github.context, core);
+    const posted = await commenter.postOrUpdateComment(commentBody);
+    
+    if (posted) {
+      core.info('Successfully posted Trivy scan results');
+    }
 
     // Set action outputs
     core.setOutput('total-vulnerabilities', results.counts.total);

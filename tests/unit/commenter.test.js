@@ -3,6 +3,7 @@ const { PRCommenter } = require('../../src/commenter');
 describe('PRCommenter', () => {
   let mockOctokit;
   let mockContext;
+  let mockCore;
   let commenter;
 
   beforeEach(() => {
@@ -30,14 +31,23 @@ describe('PRCommenter', () => {
       }
     };
 
-    commenter = new PRCommenter(mockOctokit, mockContext);
+    // Create mock core for logging
+    mockCore = {
+      info: jest.fn(),
+      debug: jest.fn(),
+      warning: jest.fn(),
+      error: jest.fn()
+    };
+
+    commenter = new PRCommenter(mockOctokit, mockContext, mockCore);
     jest.clearAllMocks();
   });
 
   describe('constructor', () => {
-    it('should initialize with octokit and context', () => {
+    it('should initialize with octokit, context, and core', () => {
       expect(commenter.octokit).toBe(mockOctokit);
       expect(commenter.context).toBe(mockContext);
+      expect(commenter.core).toBe(mockCore);
       expect(commenter.scanHeader).toBe('🔒 Trivy Security Scan Report');
     });
   });
@@ -50,7 +60,10 @@ describe('PRCommenter', () => {
 
       const commentBody = '## 🔒 Trivy Security Scan Report\n\nTest comment';
 
-      await commenter.postOrUpdateComment(commentBody);
+      const result = await commenter.postOrUpdateComment(commentBody);
+
+      // Verify it returns true when posted
+      expect(result).toBe(true);
 
       // Verify listComments was called
       expect(mockOctokit.rest.issues.listComments).toHaveBeenCalledWith({
@@ -86,7 +99,10 @@ describe('PRCommenter', () => {
 
       const commentBody = '## 🔒 Trivy Security Scan Report\n\nNew comment';
 
-      await commenter.postOrUpdateComment(commentBody);
+      const result = await commenter.postOrUpdateComment(commentBody);
+
+      // Verify it returns true when updated
+      expect(result).toBe(true);
 
       // Verify listComments was called
       expect(mockOctokit.rest.issues.listComments).toHaveBeenCalledWith({
@@ -141,7 +157,7 @@ describe('PRCommenter', () => {
       expect(mockOctokit.rest.issues.updateComment).toHaveBeenCalledTimes(1);
     });
 
-    it('should throw error when not in PR context', async () => {
+    it('should gracefully exit with info log when not in PR context', async () => {
       // Create context without pull_request
       const noPRContext = {
         payload: {},
@@ -151,11 +167,22 @@ describe('PRCommenter', () => {
         }
       };
 
-      const commenterNoPR = new PRCommenter(mockOctokit, noPRContext);
+      const commenterNoPR = new PRCommenter(mockOctokit, noPRContext, mockCore);
 
-      await expect(
-        commenterNoPR.postOrUpdateComment('Test comment')
-      ).rejects.toThrow('Action must run in pull request context');
+      const result = await commenterNoPR.postOrUpdateComment('Test comment');
+
+      // Verify it returns false when skipped
+      expect(result).toBe(false);
+
+      // Verify info log was called with graceful exit message
+      expect(mockCore.info).toHaveBeenCalledWith(
+        'Action only runs in pull request contexts, skipping'
+      );
+
+      // Verify no API calls were made
+      expect(mockOctokit.rest.issues.listComments).not.toHaveBeenCalled();
+      expect(mockOctokit.rest.issues.createComment).not.toHaveBeenCalled();
+      expect(mockOctokit.rest.issues.updateComment).not.toHaveBeenCalled();
     });
 
     it('should ignore non-Bot comments', async () => {
