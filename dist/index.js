@@ -33675,6 +33675,15 @@ class ContextResolver {
       return null;
     }
 
+    // Handle workflow_call events - inherits context from parent workflow
+    if (eventName === 'workflow_call') {
+      // workflow_call inherits the parent's context, so check for pull_request
+      if (event.pull_request?.number) {
+        return event.pull_request.number;
+      }
+      return null;
+    }
+
     // Handle push events - attempt to extract PR context (workflow_run pattern)
     if (eventName === 'push') {
       // In workflow_run pattern, push events may have PR context

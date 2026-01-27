@@ -116,6 +116,33 @@ describe('ContextResolver', () => {
       expect(prNumber).toBe(42);
     });
 
+    it('should extract PR number from workflow_call events', () => {
+      const event = {
+        pull_request: {
+          number: 99,
+          title: 'Test PR'
+        }
+      };
+
+      const resolver = new ContextResolver(mockContext);
+      const prNumber = resolver.extractPRNumber(event, 'workflow_call');
+
+      expect(prNumber).toBe(99);
+    });
+
+    it('should return null for workflow_call events without PR context', () => {
+      const event = {
+        inputs: {
+          some_input: 'value'
+        }
+      };
+
+      const resolver = new ContextResolver(mockContext);
+      const prNumber = resolver.extractPRNumber(event, 'workflow_call');
+
+      expect(prNumber).toBeNull();
+    });
+
     it('should return null when pull_request is missing', () => {
       const event = {};
 
