@@ -1,0 +1,87 @@
+# Example Publishing Workflow for Fork-Safe Pattern
+# This workflow runs on workflow_run events (when CI workflow completes)
+# It downloads artifacts and posts PR comments with full permissions
+
+name: Publish Security Results
+
+on:
+  workflow_run:
+    # Trigger when the "Security Scan" workflow completes
+    # IMPORTANT: This name must EXACTLY match the CI workflow name
+    workflows: ["Security Scan"]
+    types:
+      - completed  # Run when the workflow finishes (success or failure)
+
+jobs:
+  publish-results:
+    runs-on: ubuntu-latest
+    
+    # Only run if the CI workflow succeeded
+    # Remove this condition if you want to post comments even on scan failures
+    if: github.event.workflow_run.conclusion == 'success'
+    
+    # Required permissions for posting PR comments
+    permissions:
+      pull-requests: write  # Required to create/update PR comments
+      # For private repositories, also add:
+      # contents: read
+      # issues: read
+    
+    steps:
+      # Step 1: Post the security scan results to the PR
+      # The action will automatically:
+      # - Download the artifacts from the CI workflow
+      # - Extract the PR number from the event file
+      # - Post or update the PR comment
+      - name: Decorate PR with scan results
+        uses: katanox/trivy-pr-decorator@v1.1.0
+        with:
+          # GitHub token with PR write permissions
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          
+          # Name of the artifact containing Trivy results
+          # Must match the name used in the CI workflow
+          artifact-name: 'trivy-results'
+          
+          # Name of the artifact containing the event file
+          # Must match the name used in the CI workflow
+          event-artifact-name: 'event-file'
+          
+          # Optional: Customize the number of vulnerabilities shown
+          max-table-rows: 20
+
+      # Optional: Add additional steps here, such as:
+      # - Sending notifications
+      # - Updating a security dashboard
+      # - Failing the workflow if critical vulnerabilities are found
+      
+      # Example: Fail if critical vulnerabilities found
+      # - name: Check for critical vulnerabilities
+      #   if: steps.trivy-decorator.outputs.critical-count > 0
+      #   run: |
+      #     echo "Found ${{ steps.trivy-decorator.outputs.critical-count }} critical vulnerabilities!"
+      #     exit 1
+
+# IMPORTANT NOTES:
+# 
+# 1. Workflow Name Matching:
+#    The workflow name in "workflows: ["Security Scan"]" must EXACTLY match
+#    the name in the CI workflow (name: Security Scan)
+#
+# 2. Default Branch Requirement:
+#    Both workflows must exist on the default branch (usually main/master)
+#    for workflow_run to work. The publishing workflow won't trigger if it
+#    only exists on a feature branch.
+#
+# 3. Artifact Names:
+#    The artifact-name and event-artifact-name must match the names used
+#    in the upload-artifact steps in the CI workflow.
+#
+# 4. Security Benefits:
+#    - This pattern works with fork PRs and Dependabot PRs
+#    - The publishing workflow runs with base repository permissions
+#    - Scan execution is isolated from comment posting
+#
+# 5. Permissions:
+#    The publishing workflow needs pull-requests: write permission.
+#    For private repos, also add contents: read and issues: read.

@@ -57,6 +57,92 @@ describe('Config', () => {
       expect(config.maxTableRows).toBe(50);
       expect(typeof config.maxTableRows).toBe('number');
     });
+
+    it('should use GITHUB_EVENT_PATH as default for eventFile', () => {
+      process.env.GITHUB_EVENT_PATH = '/github/workflow/event.json';
+      process.env.GITHUB_EVENT_NAME = 'pull_request';
+      
+      core.getInput.mockImplementation((name) => {
+        const inputs = {
+          'results-file': 'trivy-results.json',
+          'github-token': 'ghp_test123',
+          'max-table-rows': '20',
+          'event-file': '',
+          'event-name': '',
+          'artifact-name': '',
+          'event-artifact-name': ''
+        };
+        return inputs[name] || '';
+      });
+
+      const config = new Config();
+
+      expect(config.eventFile).toBe('/github/workflow/event.json');
+      expect(config.eventName).toBe('pull_request');
+      
+      delete process.env.GITHUB_EVENT_PATH;
+      delete process.env.GITHUB_EVENT_NAME;
+    });
+
+    it('should use custom eventFile and eventName when provided', () => {
+      core.getInput.mockImplementation((name) => {
+        const inputs = {
+          'results-file': 'trivy-results.json',
+          'github-token': 'ghp_test123',
+          'max-table-rows': '20',
+          'event-file': '/custom/event.json',
+          'event-name': 'workflow_run',
+          'artifact-name': '',
+          'event-artifact-name': ''
+        };
+        return inputs[name] || '';
+      });
+
+      const config = new Config();
+
+      expect(config.eventFile).toBe('/custom/event.json');
+      expect(config.eventName).toBe('workflow_run');
+    });
+
+    it('should handle optional artifact names', () => {
+      core.getInput.mockImplementation((name) => {
+        const inputs = {
+          'results-file': 'trivy-results.json',
+          'github-token': 'ghp_test123',
+          'max-table-rows': '20',
+          'event-file': '',
+          'event-name': '',
+          'artifact-name': 'trivy-results',
+          'event-artifact-name': 'event-file'
+        };
+        return inputs[name] || '';
+      });
+
+      const config = new Config();
+
+      expect(config.artifactName).toBe('trivy-results');
+      expect(config.eventArtifactName).toBe('event-file');
+    });
+
+    it('should allow empty artifact names', () => {
+      core.getInput.mockImplementation((name) => {
+        const inputs = {
+          'results-file': 'trivy-results.json',
+          'github-token': 'ghp_test123',
+          'max-table-rows': '20',
+          'event-file': '',
+          'event-name': '',
+          'artifact-name': '',
+          'event-artifact-name': ''
+        };
+        return inputs[name] || '';
+      });
+
+      const config = new Config();
+
+      expect(config.artifactName).toBe('');
+      expect(config.eventArtifactName).toBe('');
+    });
   });
 
   describe('validate', () => {

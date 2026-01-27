@@ -1,5 +1,5 @@
 name: 'Trivy PR Decorator'
-description: 'Parse Trivy vulnerability scan results and post formatted comments to pull requests'
+description: 'Parse Trivy vulnerability scan results and post formatted comments to pull requests. Supports workflow_run pattern for fork PRs and Dependabot.'
 author: 'Katanox'
 
 inputs:
@@ -13,6 +13,22 @@ inputs:
     description: 'Maximum number of rows to display in the vulnerability details table'
     required: false
     default: '20'
+  event-file:
+    description: 'Path to GitHub event file (for workflow_run support). Defaults to GITHUB_EVENT_PATH'
+    required: false
+    default: ''
+  event-name:
+    description: 'GitHub event name (for workflow_run support). Defaults to GITHUB_EVENT_NAME'
+    required: false
+    default: ''
+  artifact-name:
+    description: 'Name of artifact containing test results (for workflow_run support)'
+    required: false
+    default: ''
+  event-artifact-name:
+    description: 'Name of artifact containing event file (for workflow_run support)'
+    required: false
+    default: ''
 
 outputs:
   total-vulnerabilities:

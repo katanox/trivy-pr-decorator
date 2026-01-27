@@ -1,0 +1,55 @@
+# Example CI Workflow for Fork-Safe Pattern
+# This workflow runs on pull_request events (including from forks)
+# It performs the security scan and uploads results as artifacts
+
+name: Security Scan
+
+on:
+  pull_request:
+    # Runs on all pull requests, including from forks
+    branches:
+      - main
+      - develop
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout the code from the PR
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # Step 2: Run Trivy vulnerability scanner
+      # This scans the filesystem for vulnerabilities
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@v0.33.1
+        with:
+          scan-type: 'fs'           # Scan filesystem
+          scan-ref: '.'             # Scan current directory
+          format: 'json'            # Output in JSON format
+          output: 'trivy-results.json'  # Save to this file
+
+      # Step 3: Upload the scan results as an artifact
+      # The publishing workflow will download this artifact
+      - name: Upload scan results
+        uses: actions/upload-artifact@v6
+        if: always()  # Upload even if scan finds vulnerabilities
+        with:
+          name: trivy-results
+          path: trivy-results.json
+          retention-days: 1  # Keep for 1 day (artifacts are temporary)
+
+      # Step 4: Upload the GitHub event file
+      # This contains PR context needed by the publishing workflow
+      - name: Upload event file
+        uses: actions/upload-artifact@v6
+        if: always()  # Always upload to ensure publishing workflow can run
+        with:
+          name: event-file
+          path: ${{ github.event_path }}
+          retention-days: 1
+
+      # Optional: You can add other steps here like running tests,
+      # building the project, etc. The artifacts will be available
+      # to the publishing workflow regardless of this workflow's outcome.

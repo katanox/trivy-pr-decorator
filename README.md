@@ -36,7 +36,7 @@ jobs:
           output: 'trivy-results.json'
 
       - name: Decorate PR with scan results
-        uses: katanox/trivy-pr-decorator@v1.0.0
+        uses: katanox/trivy-pr-decorator@v1.1.0
         with:
           results-file: 'trivy-results.json'
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -48,12 +48,94 @@ Customize the number of vulnerabilities displayed in the table:
 
 ```yaml
       - name: Decorate PR with scan results
-        uses: katanox/trivy-pr-decorator@v1
+        uses: katanox/trivy-pr-decorator@v1.1.0
         with:
           results-file: 'trivy-results.json'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           max-table-rows: 30
 ```
+
+### Fork-Safe Pattern with workflow_run
+
+For workflows that need to work with pull requests from forks (including Dependabot PRs), use the two-workflow pattern. This approach runs the security scan in the untrusted fork context, then posts comments from a trusted workflow with full permissions.
+
+**Why use this pattern?**
+- ✅ Works with pull requests from forks
+- ✅ Works with Dependabot pull requests
+- ✅ Maintains security by separating scan execution from comment posting
+- ✅ Avoids permission issues with `GITHUB_TOKEN` in fork PRs
+
+#### Step 1: CI Workflow (runs on pull_request)
+
+This workflow runs the Trivy scan and uploads results as artifacts:
+
+```yaml
+name: Security Scan
+on:
+  pull_request:
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@v0.33.1
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'json'
+          output: 'trivy-results.json'
+
+      - name: Upload scan results
+        uses: actions/upload-artifact@v6
+        with:
+          name: trivy-results
+          path: trivy-results.json
+
+      - name: Upload event file
+        uses: actions/upload-artifact@v6
+        with:
+          name: event-file
+          path: ${{ github.event_path }}
+```
+
+#### Step 2: Publishing Workflow (runs on workflow_run)
+
+This workflow downloads the artifacts and posts the PR comment with full permissions:
+
+```yaml
+name: Publish Security Results
+on:
+  workflow_run:
+    workflows: ["Security Scan"]
+    types:
+      - completed
+
+jobs:
+  publish-results:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Decorate PR with scan results
+        uses: katanox/trivy-pr-decorator@v1.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          artifact-name: 'trivy-results'
+          event-artifact-name: 'event-file'
+```
+
+**How it works:**
+1. The CI workflow runs on `pull_request` events (including from forks)
+2. Trivy scans the code and saves results as an artifact
+3. The event file (containing PR context) is also saved as an artifact
+4. The publishing workflow triggers when the CI workflow completes
+5. The publishing workflow runs with base repository permissions
+6. It downloads both artifacts and posts the comment to the PR
 
 ### Using Action Outputs
 
@@ -62,7 +144,7 @@ The action provides outputs that can be used in subsequent steps:
 ```yaml
       - name: Decorate PR with scan results
         id: trivy-decorator
-        uses: katanox/trivy-pr-decorator@v1.0.0
+        uses: katanox/trivy-pr-decorator@v1.1.0
         with:
           results-file: 'trivy-results.json'
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -86,9 +168,15 @@ The action provides outputs that can be used in subsequent steps:
 
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
-| `results-file` | Path to the Trivy JSON results file | Yes | - |
+| `results-file` | Path to the Trivy JSON results file (not used when `artifact-name` is provided) | No* | - |
 | `github-token` | GitHub token for API authentication (use `${{ secrets.GITHUB_TOKEN }}`) | Yes | - |
 | `max-table-rows` | Maximum number of rows to display in the vulnerability details table | No | `20` |
+| `artifact-name` | Name of the artifact containing Trivy results (for workflow_run pattern) | No | - |
+| `event-artifact-name` | Name of the artifact containing the event file (for workflow_run pattern) | No | - |
+| `event-file` | Path to the GitHub event file | No | `$GITHUB_EVENT_PATH` |
+| `event-name` | Name of the GitHub event | No | `$GITHUB_EVENT_NAME` |
+
+**Note:** Either `results-file` OR `artifact-name` must be provided. Use `results-file` for direct PR workflows, or `artifact-name` for the workflow_run pattern.
 
 ## Outputs
 
@@ -125,6 +213,18 @@ permissions:
 - `contents: read` - Required to access repository metadata and context in private repositories.
 - `issues: read` - Required to list existing comments on pull requests in private repositories (pull requests are implemented as issues in GitHub's API).
 
+### Workflow Pattern Comparison
+
+| Feature | Direct PR Pattern | workflow_run Pattern |
+|---------|------------------|---------------------|
+| **Works with fork PRs** | ❌ No | ✅ Yes |
+| **Works with Dependabot** | ❌ No | ✅ Yes |
+| **Setup complexity** | Simple (1 workflow) | Moderate (2 workflows) |
+| **Permissions** | Limited in forks | Full base repo permissions |
+| **Use case** | Internal PRs only | All PRs including forks |
+
+**Recommendation:** Use the workflow_run pattern if you accept pull requests from forks or use Dependabot. Use the direct pattern for simpler internal-only workflows.
+
 ## Comment Format
 
 The action posts a formatted comment to your pull request that looks like this:
@@ -159,10 +259,22 @@ The action posts a formatted comment to your pull request that looks like this:
 
 ## How It Works
 
+### Direct PR Pattern
+
 1. **Parse**: Reads the Trivy JSON results file and extracts vulnerability data
 2. **Aggregate**: Counts vulnerabilities by severity level (CRITICAL, HIGH, MEDIUM, LOW)
 3. **Format**: Generates a markdown comment with emoji indicators and a sorted vulnerability table
 4. **Post**: Creates a new PR comment or updates an existing one to avoid clutter
+
+### workflow_run Pattern
+
+1. **Scan**: CI workflow runs Trivy scan and uploads results + event file as artifacts
+2. **Trigger**: Publishing workflow triggers when CI workflow completes
+3. **Download**: Publishing workflow downloads artifacts from the triggering workflow
+4. **Resolve**: Extracts PR number from the event file
+5. **Parse & Format**: Same as direct pattern - parses results and formats comment
+6. **Post**: Posts comment to the PR using the resolved PR number
+7. **Cleanup**: Removes temporary artifact files
 
 The action intelligently identifies and updates existing comments from previous runs, ensuring your pull request stays clean and readable.
 
@@ -227,7 +339,9 @@ trivy-pr-decorator/
 │   ├── parser.js          # Trivy results parsing
 │   ├── formatter.js       # Comment formatting
 │   ├── commenter.js       # GitHub API interactions
-│   └── config.js          # Input validation and configuration
+│   ├── config.js          # Input validation and configuration
+│   ├── artifact-handler.js # Artifact download and extraction
+│   └── context-resolver.js # PR context resolution
 ├── tests/
 │   ├── unit/              # Unit tests
 │   ├── properties/        # Property-based tests
@@ -243,6 +357,53 @@ The action uses a dual testing approach:
 - **Property-Based Tests**: Verify universal properties across randomized inputs using fast-check
 
 All property tests run with a minimum of 100 iterations to ensure robust validation.
+
+## Troubleshooting
+
+### Common Issues with workflow_run Pattern
+
+**Problem: Comments not appearing on fork PRs**
+
+Solution: Ensure you're using the two-workflow pattern with `workflow_run`. The direct pattern won't work with fork PRs due to GitHub security restrictions.
+
+**Problem: "Artifact not found" error**
+
+Solution: 
+- Verify the artifact names match between upload and download steps
+- Check that the CI workflow completed successfully before the publishing workflow ran
+- Ensure artifacts are uploaded in the CI workflow before the workflow completes
+
+**Problem: "Cannot read PR context" error**
+
+Solution:
+- Make sure you're uploading the event file in the CI workflow: `path: ${{ github.event_path }}`
+- Verify the `event-artifact-name` input matches the artifact name used in upload
+
+**Problem: Publishing workflow not triggering**
+
+Solution:
+- Check that the workflow name in `workflow_run.workflows` exactly matches the CI workflow name
+- Verify the CI workflow completed (check `if: github.event.workflow_run.conclusion == 'success'`)
+- Ensure both workflows are on the default branch (workflow_run only works for workflows on the default branch)
+
+**Problem: Permission denied when posting comments**
+
+Solution:
+- Add `permissions: pull-requests: write` to the publishing workflow job
+- For private repos, also add `contents: read` and `issues: read`
+
+### General Troubleshooting
+
+**Problem: Action fails with "Results file not found"**
+
+Solution: Verify the `results-file` path matches the Trivy action's `output` parameter.
+
+**Problem: No comment appears on PR**
+
+Solution:
+- Check workflow logs for errors
+- Verify the `github-token` has `pull-requests: write` permission
+- Ensure the workflow is running in a PR context (not on push to main)
 
 ## Contributing
 

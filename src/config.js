@@ -13,6 +13,16 @@ class Config {
     // Read optional input with default value
     const maxTableRowsInput = core.getInput('max-table-rows');
     this.maxTableRows = maxTableRowsInput ? parseInt(maxTableRowsInput, 10) : 20;
+    
+    // Read workflow_run support inputs (optional)
+    const eventFileInput = core.getInput('event-file');
+    this.eventFile = eventFileInput || process.env.GITHUB_EVENT_PATH || '';
+    
+    const eventNameInput = core.getInput('event-name');
+    this.eventName = eventNameInput || process.env.GITHUB_EVENT_NAME || '';
+    
+    this.artifactName = core.getInput('artifact-name') || '';
+    this.eventArtifactName = core.getInput('event-artifact-name') || '';
   }
 
   /**

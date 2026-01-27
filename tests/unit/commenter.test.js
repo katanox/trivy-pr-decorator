@@ -228,13 +228,111 @@ describe('PRCommenter', () => {
       expect(mockOctokit.rest.issues.createComment).toHaveBeenCalled();
       expect(mockOctokit.rest.issues.updateComment).not.toHaveBeenCalled();
     });
+
+    it('should use explicit PR number when provided', async () => {
+      mockOctokit.rest.issues.listComments.mockResolvedValue({ data: [] });
+      mockOctokit.rest.issues.createComment.mockResolvedValue({});
+
+      const commentBody = '## 🔒 Trivy Security Scan Report\n\nTest comment';
+      const explicitPRNumber = 999;
+
+      const result = await commenter.postOrUpdateComment(commentBody, explicitPRNumber);
+
+      expect(result).toBe(true);
+
+      // Verify listComments was called with explicit PR number
+      expect(mockOctokit.rest.issues.listComments).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        issue_number: explicitPRNumber
+      });
+
+      // Verify createComment was called with explicit PR number
+      expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        issue_number: explicitPRNumber,
+        body: commentBody
+      });
+    });
+
+    it('should fall back to context PR number when explicit PR number not provided', async () => {
+      mockOctokit.rest.issues.listComments.mockResolvedValue({ data: [] });
+      mockOctokit.rest.issues.createComment.mockResolvedValue({});
+
+      const commentBody = '## 🔒 Trivy Security Scan Report\n\nTest comment';
+
+      await commenter.postOrUpdateComment(commentBody);
+
+      // Verify it used context PR number (123)
+      expect(mockOctokit.rest.issues.listComments).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        issue_number: 123
+      });
+    });
+
+    it('should gracefully exit when no PR number available', async () => {
+      // Create context without pull_request
+      const noPRContext = {
+        payload: {},
+        repo: {
+          owner: 'test-owner',
+          repo: 'test-repo'
+        }
+      };
+
+      const commenterNoPR = new PRCommenter(mockOctokit, noPRContext, mockCore);
+
+      // Call without explicit PR number
+      const result = await commenterNoPR.postOrUpdateComment('Test comment');
+
+      expect(result).toBe(false);
+      expect(mockCore.info).toHaveBeenCalledWith(
+        'Action only runs in pull request contexts, skipping'
+      );
+      expect(mockOctokit.rest.issues.listComments).not.toHaveBeenCalled();
+    });
+
+    it('should update existing comment with explicit PR number', async () => {
+      const existingComment = {
+        id: 456,
+        user: { type: 'Bot', login: 'github-actions[bot]' },
+        body: '## 🔒 Trivy Security Scan Report\n\nOld comment'
+      };
+
+      mockOctokit.rest.issues.listComments.mockResolvedValue({
+        data: [existingComment]
+      });
+      mockOctokit.rest.issues.updateComment.mockResolvedValue({});
+
+      const commentBody = '## 🔒 Trivy Security Scan Report\n\nNew comment';
+      const explicitPRNumber = 888;
+
+      await commenter.postOrUpdateComment(commentBody, explicitPRNumber);
+
+      // Verify listComments was called with explicit PR number
+      expect(mockOctokit.rest.issues.listComments).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        issue_number: explicitPRNumber
+      });
+
+      // Verify updateComment was called
+      expect(mockOctokit.rest.issues.updateComment).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        comment_id: 456,
+        body: commentBody
+      });
+    });
   });
 
   describe('findExistingComment()', () => {
     it('should return null when no comments exist', async () => {
       mockOctokit.rest.issues.listComments.mockResolvedValue({ data: [] });
 
-      const result = await commenter.findExistingComment();
+      const result = await commenter.findExistingComment(123);
 
       expect(result).toBeNull();
     });
@@ -250,7 +348,7 @@ describe('PRCommenter', () => {
         data: [botComment]
       });
 
-      const result = await commenter.findExistingComment();
+      const result = await commenter.findExistingComment(123);
 
       expect(result).toEqual(botComment);
     });
@@ -266,7 +364,7 @@ describe('PRCommenter', () => {
 
       mockOctokit.rest.issues.listComments.mockResolvedValue({ data: comments });
 
-      const result = await commenter.findExistingComment();
+      const result = await commenter.findExistingComment(123);
 
       expect(result).toBeNull();
     });
@@ -282,7 +380,7 @@ describe('PRCommenter', () => {
 
       mockOctokit.rest.issues.listComments.mockResolvedValue({ data: comments });
 
-      const result = await commenter.findExistingComment();
+      const result = await commenter.findExistingComment(123);
 
       expect(result).toBeNull();
     });
@@ -292,7 +390,7 @@ describe('PRCommenter', () => {
         new Error('API Error')
       );
 
-      await expect(commenter.findExistingComment()).rejects.toThrow(
+      await expect(commenter.findExistingComment(123)).rejects.toThrow(
         'Failed to list PR comments: API Error'
       );
     });
@@ -304,7 +402,7 @@ describe('PRCommenter', () => {
 
       const commentBody = 'Test comment body';
 
-      await commenter.createComment(commentBody);
+      await commenter.createComment(123, commentBody);
 
       expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith({
         owner: 'test-owner',
@@ -319,7 +417,7 @@ describe('PRCommenter', () => {
         new Error('Permission denied')
       );
 
-      await expect(commenter.createComment('Test')).rejects.toThrow(
+      await expect(commenter.createComment(123, 'Test')).rejects.toThrow(
         'Failed to create comment: Permission denied'
       );
     });
