@@ -19,25 +19,29 @@ class PRCommenter {
 
   /**
    * Posts a new comment or updates an existing bot comment on the PR.
-   * Gracefully exits if not in PR context.
+   * Gracefully exits if no PR context can be determined.
    * 
    * @param {string} body - The comment body to post or update
+   * @param {number|null} prNumber - Optional PR number (for workflow_run context or push events)
    * @returns {Promise<boolean>} True if comment was posted/updated, false if skipped
    * @throws {Error} If API call fails
    */
-  async postOrUpdateComment(body) {
-    // Validate PR context - gracefully exit if not in PR
-    if (!this.context.payload.pull_request) {
-      this.core.info('Action only runs in pull request contexts, skipping');
+  async postOrUpdateComment(body, prNumber = null) {
+    // Determine PR number from parameter or context
+    const pr = prNumber || this.context.payload.pull_request?.number;
+    
+    // Validate PR context - gracefully exit if no PR number available
+    if (!pr) {
+      this.core.info('No pull request context found, skipping comment');
       return false;
     }
 
-    const existingComment = await this.findExistingComment();
+    const existingComment = await this.findExistingComment(pr);
 
     if (existingComment) {
       await this.updateComment(existingComment.id, body);
     } else {
-      await this.createComment(body);
+      await this.createComment(pr, body);
     }
     
     return true;
@@ -46,19 +50,19 @@ class PRCommenter {
   /**
    * Finds an existing bot comment with the scan header.
    * 
+   * @param {number} prNumber - PR number
    * @returns {Promise<Object|null>} The existing comment or null if not found
    * @private
    */
-  async findExistingComment() {
+  async findExistingComment(prNumber) {
     const { owner, repo } = this.context.repo;
-    const issue_number = this.context.payload.pull_request.number;
 
     try {
       // List all comments on the PR
       const { data: comments } = await this.octokit.rest.issues.listComments({
         owner,
         repo,
-        issue_number
+        issue_number: prNumber
       });
 
       // Filter for bot comments with the scan header
@@ -76,18 +80,18 @@ class PRCommenter {
   /**
    * Creates a new comment on the PR.
    * 
+   * @param {number} prNumber - PR number
    * @param {string} body - The comment body
    * @private
    */
-  async createComment(body) {
+  async createComment(prNumber, body) {
     const { owner, repo } = this.context.repo;
-    const issue_number = this.context.payload.pull_request.number;
 
     try {
       await this.octokit.rest.issues.createComment({
         owner,
         repo,
-        issue_number,
+        issue_number: prNumber,
         body
       });
     } catch (error) {
