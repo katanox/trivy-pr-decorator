@@ -23,6 +23,9 @@ class Config {
     
     this.artifactName = core.getInput('artifact-name') || '';
     this.eventArtifactName = core.getInput('event-artifact-name') || '';
+    
+    // Read SHA input (optional)
+    this.sha = core.getInput('sha') || '';
   }
 
   /**

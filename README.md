@@ -173,6 +173,7 @@ The action provides outputs that can be used in subsequent steps:
 | `results-file` | Path to the Trivy JSON results file (not used when `artifact-name` is provided) | No* | - |
 | `github-token` | GitHub token for API authentication (use `${{ secrets.GITHUB_TOKEN }}`) | Yes | - |
 | `max-table-rows` | Maximum number of rows to display in the vulnerability details table | No | `20` |
+| `sha` | Commit SHA to use for PR lookup (optional, auto-detected if not provided) | No | - |
 | `artifact-name` | Name of the artifact containing Trivy results (for workflow_run pattern) | No | - |
 | `event-artifact-name` | Name of the artifact containing the event file (for workflow_run pattern) | No | - |
 | `event-file` | Path to the GitHub event file | No | `$GITHUB_EVENT_PATH` |
@@ -404,6 +405,31 @@ Solution:
 Solution:
 - Add `permissions: pull-requests: write` to the publishing workflow job
 - For private repos, also add `contents: read` and `issues: read`
+
+### Common Issues with workflow_call Pattern
+
+**Problem: "No PR number could be resolved from context" when using workflow_call**
+
+Solution:
+- The action automatically looks up the PR associated with the commit SHA
+- If the lookup fails, you can explicitly pass the commit SHA using the `sha` input:
+  ```yaml
+  - name: Decorate PR with scan results
+    uses: katanox/trivy-pr-decorator@v1.1.0
+    with:
+      results-file: 'trivy-results.json'
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+      sha: ${{ github.event.pull_request.head.sha || github.sha }}
+  ```
+- Ensure the commit has been pushed to a branch that's part of a pull request
+- Check that the GitHub API can access the repository (private repos may have restrictions)
+
+**Problem: workflow_call from push event not finding PR**
+
+Solution:
+- The action checks multiple locations for the commit SHA (head_commit.id, after, sha)
+- If automatic detection fails, pass the SHA explicitly as shown above
+- Verify the parent workflow is passing the correct context to the child workflow
 
 ### General Troubleshooting
 

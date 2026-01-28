@@ -321,4 +321,305 @@ describe('ContextResolver', () => {
       expect(result.eventName).toBe('');
     });
   });
+
+  describe('extractCommitSHA', () => {
+    it('should extract SHA from shaInput when provided', () => {
+      const resolver = new ContextResolver(mockContext);
+      const sha = resolver.extractCommitSHA('input-sha-123');
+
+      expect(sha).toBe('input-sha-123');
+    });
+
+    it('should extract SHA from head_commit.id when shaInput not provided', () => {
+      mockContext.payload = {
+        head_commit: {
+          id: 'head-commit-sha-456'
+        }
+      };
+
+      const resolver = new ContextResolver(mockContext);
+      const sha = resolver.extractCommitSHA();
+
+      expect(sha).toBe('head-commit-sha-456');
+    });
+
+    it('should extract SHA from payload.after when head_commit.id missing', () => {
+      mockContext.payload = {
+        after: 'after-sha-789'
+      };
+
+      const resolver = new ContextResolver(mockContext);
+      const sha = resolver.extractCommitSHA();
+
+      expect(sha).toBe('after-sha-789');
+    });
+
+    it('should extract SHA from context.sha when other locations missing', () => {
+      mockContext.payload = {};
+      mockContext.sha = 'context-sha-abc';
+
+      const resolver = new ContextResolver(mockContext);
+      const sha = resolver.extractCommitSHA();
+
+      expect(sha).toBe('context-sha-abc');
+    });
+
+    it('should return null when all locations are null/undefined', () => {
+      mockContext.payload = {};
+      mockContext.sha = undefined;
+
+      const resolver = new ContextResolver(mockContext);
+      const sha = resolver.extractCommitSHA();
+
+      expect(sha).toBeNull();
+    });
+
+    it('should return null when all locations are empty strings', () => {
+      mockContext.payload = {
+        head_commit: { id: '' },
+        after: ''
+      };
+      mockContext.sha = '';
+
+      const resolver = new ContextResolver(mockContext);
+      const sha = resolver.extractCommitSHA();
+
+      expect(sha).toBeNull();
+    });
+
+    it('should prioritize shaInput over head_commit.id', () => {
+      mockContext.payload = {
+        head_commit: {
+          id: 'head-commit-sha'
+        }
+      };
+
+      const resolver = new ContextResolver(mockContext);
+      const sha = resolver.extractCommitSHA('input-sha');
+
+      expect(sha).toBe('input-sha');
+    });
+
+    it('should prioritize head_commit.id over after', () => {
+      mockContext.payload = {
+        head_commit: {
+          id: 'head-commit-sha'
+        },
+        after: 'after-sha'
+      };
+
+      const resolver = new ContextResolver(mockContext);
+      const sha = resolver.extractCommitSHA();
+
+      expect(sha).toBe('head-commit-sha');
+    });
+
+    it('should prioritize after over context.sha', () => {
+      mockContext.payload = {
+        after: 'after-sha'
+      };
+      mockContext.sha = 'context-sha';
+
+      const resolver = new ContextResolver(mockContext);
+      const sha = resolver.extractCommitSHA();
+
+      expect(sha).toBe('after-sha');
+    });
+
+    it('should handle missing head_commit object', () => {
+      mockContext.payload = {
+        after: 'after-sha'
+      };
+
+      const resolver = new ContextResolver(mockContext);
+      const sha = resolver.extractCommitSHA();
+
+      expect(sha).toBe('after-sha');
+    });
+
+    it('should handle head_commit without id property', () => {
+      mockContext.payload = {
+        head_commit: {},
+        after: 'after-sha'
+      };
+
+      const resolver = new ContextResolver(mockContext);
+      const sha = resolver.extractCommitSHA();
+
+      expect(sha).toBe('after-sha');
+    });
+  });
+
+  describe('findPRByCommit', () => {
+    it('should return null when octokit is not available', async () => {
+      const resolver = new ContextResolver(mockContext, null);
+      const prNumber = await resolver.findPRByCommit('abc123');
+
+      expect(prNumber).toBeNull();
+    });
+
+    it('should find PR by commit SHA', async () => {
+      mockOctokit.rest.repos.listPullRequestsAssociatedWithCommit.mockResolvedValue({
+        data: [
+          {
+            number: 42,
+            state: 'open',
+            title: 'Test PR'
+          }
+        ]
+      });
+
+      const resolver = new ContextResolver(mockContext, mockOctokit);
+      const prNumber = await resolver.findPRByCommit('abc123');
+
+      expect(prNumber).toBe(42);
+      expect(mockOctokit.rest.repos.listPullRequestsAssociatedWithCommit).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        commit_sha: 'abc123'
+      });
+    });
+
+    it('should return first open PR when multiple PRs found', async () => {
+      mockOctokit.rest.repos.listPullRequestsAssociatedWithCommit.mockResolvedValue({
+        data: [
+          {
+            number: 10,
+            state: 'closed',
+            title: 'Closed PR'
+          },
+          {
+            number: 42,
+            state: 'open',
+            title: 'Open PR'
+          },
+          {
+            number: 99,
+            state: 'open',
+            title: 'Another Open PR'
+          }
+        ]
+      });
+
+      const resolver = new ContextResolver(mockContext, mockOctokit);
+      const prNumber = await resolver.findPRByCommit('abc123');
+
+      expect(prNumber).toBe(42);
+    });
+
+    it('should return first PR when no open PRs found', async () => {
+      mockOctokit.rest.repos.listPullRequestsAssociatedWithCommit.mockResolvedValue({
+        data: [
+          {
+            number: 10,
+            state: 'closed',
+            title: 'Closed PR'
+          },
+          {
+            number: 20,
+            state: 'merged',
+            title: 'Merged PR'
+          }
+        ]
+      });
+
+      const resolver = new ContextResolver(mockContext, mockOctokit);
+      const prNumber = await resolver.findPRByCommit('abc123');
+
+      expect(prNumber).toBe(10);
+    });
+
+    it('should return null when no PRs found', async () => {
+      mockOctokit.rest.repos.listPullRequestsAssociatedWithCommit.mockResolvedValue({
+        data: []
+      });
+
+      const resolver = new ContextResolver(mockContext, mockOctokit);
+      const prNumber = await resolver.findPRByCommit('abc123');
+
+      expect(prNumber).toBeNull();
+    });
+
+    it('should return null when API call fails', async () => {
+      mockOctokit.rest.repos.listPullRequestsAssociatedWithCommit.mockRejectedValue(
+        new Error('API Error')
+      );
+
+      const resolver = new ContextResolver(mockContext, mockOctokit);
+      const prNumber = await resolver.findPRByCommit('abc123');
+
+      expect(prNumber).toBeNull();
+    });
+  });
+
+  describe('resolvePRContext with SHA input', () => {
+    it('should use SHA input to find PR when no PR in payload', async () => {
+      mockContext.eventName = 'workflow_call';
+      mockContext.payload = {};
+
+      mockOctokit.rest.repos.listPullRequestsAssociatedWithCommit.mockResolvedValue({
+        data: [
+          {
+            number: 42,
+            state: 'open',
+            title: 'Test PR'
+          }
+        ]
+      });
+
+      const resolver = new ContextResolver(mockContext, mockOctokit);
+      const result = await resolver.resolvePRContext(null, 'workflow_call', 'input-sha-123');
+
+      expect(result.prNumber).toBe(42);
+      expect(mockOctokit.rest.repos.listPullRequestsAssociatedWithCommit).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        commit_sha: 'input-sha-123'
+      });
+    });
+
+    it('should extract SHA from head_commit.id for workflow_call when no SHA input', async () => {
+      mockContext.eventName = 'workflow_call';
+      mockContext.payload = {
+        head_commit: {
+          id: 'head-commit-sha'
+        }
+      };
+
+      mockOctokit.rest.repos.listPullRequestsAssociatedWithCommit.mockResolvedValue({
+        data: [
+          {
+            number: 99,
+            state: 'open',
+            title: 'Test PR'
+          }
+        ]
+      });
+
+      const resolver = new ContextResolver(mockContext, mockOctokit);
+      const result = await resolver.resolvePRContext(null, 'workflow_call');
+
+      expect(result.prNumber).toBe(99);
+      expect(mockOctokit.rest.repos.listPullRequestsAssociatedWithCommit).toHaveBeenCalledWith({
+        owner: 'test-owner',
+        repo: 'test-repo',
+        commit_sha: 'head-commit-sha'
+      });
+    });
+
+    it('should not call findPRByCommit when PR already in payload', async () => {
+      mockContext.eventName = 'workflow_call';
+      mockContext.payload = {
+        pull_request: {
+          number: 42
+        }
+      };
+
+      const resolver = new ContextResolver(mockContext, mockOctokit);
+      const result = await resolver.resolvePRContext(null, 'workflow_call', 'input-sha-123');
+
+      expect(result.prNumber).toBe(42);
+      expect(mockOctokit.rest.repos.listPullRequestsAssociatedWithCommit).not.toHaveBeenCalled();
+    });
+  });
 });

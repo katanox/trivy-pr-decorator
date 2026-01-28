@@ -29,6 +29,10 @@ inputs:
     description: 'Name of artifact containing event file (for workflow_run support)'
     required: false
     default: ''
+  sha:
+    description: 'Commit SHA to use for PR lookup (optional, auto-detected if not provided)'
+    required: false
+    default: ''
 
 outputs:
   total-vulnerabilities:

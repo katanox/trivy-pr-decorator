@@ -33553,6 +33553,9 @@ class Config {
     
     this.artifactName = core.getInput('artifact-name') || '';
     this.eventArtifactName = core.getInput('event-artifact-name') || '';
+    
+    // Read SHA input (optional)
+    this.sha = core.getInput('sha') || '';
   }
 
   /**
@@ -33604,9 +33607,10 @@ class ContextResolver {
    * Resolves PR context from event file.
    * @param {string} eventFilePath - Path to event file (optional)
    * @param {string} eventName - Event name (optional)
+   * @param {string} shaInput - Commit SHA input (optional)
    * @returns {Promise<{prNumber: number|null, isWorkflowRun: boolean, eventName: string}>}
    */
-  async resolvePRContext(eventFilePath, eventName) {
+  async resolvePRContext(eventFilePath, eventName, shaInput = null) {
     const isWorkflowRun = !!this.context.payload.workflow_run;
     
     // Use provided event name or default from context
@@ -33645,7 +33649,7 @@ class ContextResolver {
       
       // If push or workflow_call event and still no PR, try to find PR by commit SHA
       if (!prNumber && (resolvedEventName === 'push' || resolvedEventName === 'workflow_call')) {
-        const sha = this.context.payload.after || this.context.sha;
+        const sha = this.extractCommitSHA(shaInput);
         if (sha) {
           core.info(`Attempting to find PR associated with commit: ${sha}`);
           prNumber = await this.findPRByCommit(sha);
@@ -33664,6 +33668,48 @@ class ContextResolver {
       isWorkflowRun,
       eventName: resolvedEventName
     };
+  }
+
+  /**
+   * Extracts commit SHA from multiple possible locations in the GitHub Actions context.
+   * Priority order: shaInput > head_commit.id > after > context.sha
+   * @param {string} shaInput - Optional explicit SHA input (highest priority)
+   * @returns {string|null} Commit SHA or null if not found
+   * @private
+   */
+  extractCommitSHA(shaInput = null) {
+    core.info('Extracting commit SHA from context...');
+    
+    // Priority 1: Explicit input (highest priority)
+    if (shaInput) {
+      core.info(`Using SHA from input: ${shaInput}`);
+      return shaInput;
+    }
+    
+    // Priority 2: head_commit.id (common in push events)
+    if (this.context.payload.head_commit?.id) {
+      const sha = this.context.payload.head_commit.id;
+      core.info(`Found SHA in payload.head_commit.id: ${sha}`);
+      return sha;
+    }
+    
+    // Priority 3: after (push events)
+    if (this.context.payload.after) {
+      const sha = this.context.payload.after;
+      core.info(`Found SHA in payload.after: ${sha}`);
+      return sha;
+    }
+    
+    // Priority 4: context.sha (fallback)
+    if (this.context.sha) {
+      const sha = this.context.sha;
+      core.info(`Found SHA in context.sha: ${sha}`);
+      return sha;
+    }
+    
+    core.info('No commit SHA found in any checked location');
+    core.debug(`Checked locations: shaInput, payload.head_commit.id, payload.after, context.sha`);
+    return null;
   }
 
   /**
@@ -33690,10 +33736,13 @@ class ContextResolver {
       });
 
       if (prs && prs.length > 0) {
+        core.info(`Found ${prs.length} PR(s) associated with commit`);
+        
         // Return the first open PR, or the first PR if none are open
         const openPR = prs.find(pr => pr.state === 'open');
         const pr = openPR || prs[0];
-        core.info(`Found PR #${pr.number} (${pr.state}) associated with commit`);
+        
+        core.info(`Selected PR #${pr.number} (state: ${pr.state}, title: "${pr.title}")`);
         return pr.number;
       }
 
@@ -33701,6 +33750,7 @@ class ContextResolver {
       return null;
     } catch (error) {
       core.warning(`Failed to lookup PR by commit: ${error.message}`);
+      core.debug(`Error details: ${error.stack}`);
       return null;
     }
   }
@@ -36024,7 +36074,8 @@ async function run() {
 
     // Resolve PR context (handles both direct PR and workflow_run)
     const contextResolver = new ContextResolver(github.context, octokit);
-    const prContext = await contextResolver.resolvePRContext(eventFilePath, config.eventName);
+    const shaInput = config.sha || null;
+    const prContext = await contextResolver.resolvePRContext(eventFilePath, config.eventName, shaInput);
     
     if (prContext.prNumber) {
       core.info(`Resolved PR number: ${prContext.prNumber}`);
