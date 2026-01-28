@@ -5,8 +5,9 @@ const fs = require('fs');
  * Resolves PR context from event files in workflow_run scenarios.
  */
 class ContextResolver {
-  constructor(context) {
+  constructor(context, octokit = null) {
     this.context = context;
+    this.octokit = octokit;
   }
 
   /**
@@ -20,6 +21,8 @@ class ContextResolver {
     
     // Use provided event name or default from context
     const resolvedEventName = eventName || this.context.eventName || '';
+    
+    core.info(`Resolving PR context for event: ${resolvedEventName}`);
     
     let prNumber = null;
 
@@ -37,10 +40,33 @@ class ContextResolver {
       
       // If workflow_call and no PR found, check if there's a pull_request in the payload
       // (workflow_call inherits the parent's context which may have PR data)
-      if (!prNumber && resolvedEventName === 'workflow_call' && this.context.payload.pull_request) {
-        prNumber = this.context.payload.pull_request.number;
-        core.info(`Found PR context from workflow_call parent: ${prNumber}`);
+      if (!prNumber && resolvedEventName === 'workflow_call') {
+        core.info('workflow_call detected, checking for inherited PR context...');
+        
+        // Check various possible locations for PR context
+        if (this.context.payload.pull_request?.number) {
+          prNumber = this.context.payload.pull_request.number;
+          core.info(`Found PR context from workflow_call parent: ${prNumber}`);
+        } else {
+          core.info('No pull_request found in payload');
+          core.debug(`Payload keys: ${Object.keys(this.context.payload).join(', ')}`);
+        }
       }
+      
+      // If push or workflow_call event and still no PR, try to find PR by commit SHA
+      if (!prNumber && (resolvedEventName === 'push' || resolvedEventName === 'workflow_call')) {
+        const sha = this.context.payload.after || this.context.sha;
+        if (sha) {
+          core.info(`Attempting to find PR associated with commit: ${sha}`);
+          prNumber = await this.findPRByCommit(sha);
+        }
+      }
+    }
+
+    if (prNumber) {
+      core.info(`Resolved PR number: ${prNumber}`);
+    } else {
+      core.info('No PR number could be resolved from context');
     }
 
     return {
@@ -48,6 +74,45 @@ class ContextResolver {
       isWorkflowRun,
       eventName: resolvedEventName
     };
+  }
+
+  /**
+   * Finds PR number associated with a commit SHA using GitHub API.
+   * @param {string} sha - Commit SHA
+   * @returns {Promise<number|null>} PR number or null
+   * @private
+   */
+  async findPRByCommit(sha) {
+    if (!this.octokit) {
+      core.debug('No octokit instance available for PR lookup');
+      return null;
+    }
+
+    try {
+      const { owner, repo } = this.context.repo;
+      core.info(`Looking up PRs for commit ${sha} in ${owner}/${repo}`);
+      
+      // Search for PRs associated with this commit
+      const { data: prs } = await this.octokit.rest.repos.listPullRequestsAssociatedWithCommit({
+        owner,
+        repo,
+        commit_sha: sha
+      });
+
+      if (prs && prs.length > 0) {
+        // Return the first open PR, or the first PR if none are open
+        const openPR = prs.find(pr => pr.state === 'open');
+        const pr = openPR || prs[0];
+        core.info(`Found PR #${pr.number} (${pr.state}) associated with commit`);
+        return pr.number;
+      }
+
+      core.info('No PRs found associated with this commit');
+      return null;
+    } catch (error) {
+      core.warning(`Failed to lookup PR by commit: ${error.message}`);
+      return null;
+    }
   }
 
   /**

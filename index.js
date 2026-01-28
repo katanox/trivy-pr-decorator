@@ -53,7 +53,7 @@ async function run() {
     }
 
     // Resolve PR context (handles both direct PR and workflow_run)
-    const contextResolver = new ContextResolver(github.context);
+    const contextResolver = new ContextResolver(github.context, octokit);
     const prContext = await contextResolver.resolvePRContext(eventFilePath, config.eventName);
     
     if (prContext.prNumber) {

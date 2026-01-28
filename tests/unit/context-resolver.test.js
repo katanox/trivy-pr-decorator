@@ -30,6 +30,7 @@ jest.mock('fs', () => ({
 
 describe('ContextResolver', () => {
   let mockContext;
+  let mockOctokit;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -40,6 +41,15 @@ describe('ContextResolver', () => {
       repo: {
         owner: 'test-owner',
         repo: 'test-repo'
+      },
+      sha: 'abc123'
+    };
+
+    mockOctokit = {
+      rest: {
+        repos: {
+          listPullRequestsAssociatedWithCommit: jest.fn()
+        }
       }
     };
   });
