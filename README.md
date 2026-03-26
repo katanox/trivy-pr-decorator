@@ -17,18 +17,8 @@ A GitHub Action that parses [Trivy](https://github.com/aquasecurity/trivy-action
 Add this action to your workflow after running a Trivy scan:
 
 ```yaml
-name: Security Scan
-on: [pull_request]
-
-jobs:
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@v0.33.1
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -36,7 +26,50 @@ jobs:
           output: 'trivy-results.json'
 
       - name: Decorate PR with scan results
-        uses: katanox/trivy-pr-decorator@v1.0.0
+        uses: katanox/trivy-pr-decorator@57e223b003c96ab604014d81c864634919a06033 # v1.0.1
+        with:
+          results-file: 'trivy-results.json'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+Example for Grype Scan:
+
+```yaml
+      - name: Scan container image with Grype
+        id: grype-scan
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+        with:
+          image: "localbuild/testimage:latest"
+          output-format: json
+          output-file: grype-results.json
+          grype-version: "v0.110.0"
+          fail-build: false
+
+      - name: Convert Grype results to Trivy JSON format
+        run: |
+          jq '{
+            Results: [
+              .matches | group_by(.artifact.type)[] |
+              {
+                Target: (.[0].artifact.locations[0].path // .[0].artifact.type),
+                Type: .[0].artifact.type,
+                Vulnerabilities: [
+                  .[] |
+                  {
+                    VulnerabilityID: .vulnerability.id,
+                    PkgName: .artifact.name,
+                    InstalledVersion: .artifact.version,
+                    FixedVersion: ((.vulnerability.fix.versions // []) | join(", ") | if . == "" then "N/A" else . end),
+                    Severity: (.vulnerability.severity | ascii_upcase),
+                    Title: (.vulnerability.description // "")
+                  }
+                ]
+              }
+            ]
+          }' grype-results.json > trivy-results.json
+
+      - name: Decorate PR with scan results
+        uses: katanox/trivy-pr-decorator@57e223b003c96ab604014d81c864634919a06033 # v1.0.1
         with:
           results-file: 'trivy-results.json'
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -48,7 +81,7 @@ Customize the number of vulnerabilities displayed in the table:
 
 ```yaml
       - name: Decorate PR with scan results
-        uses: katanox/trivy-pr-decorator@v1
+        uses: katanox/trivy-pr-decorator@57e223b003c96ab604014d81c864634919a06033 # v1.0.1
         with:
           results-file: 'trivy-results.json'
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -62,7 +95,7 @@ The action provides outputs that can be used in subsequent steps:
 ```yaml
       - name: Decorate PR with scan results
         id: trivy-decorator
-        uses: katanox/trivy-pr-decorator@v1.0.0
+        uses: katanox/trivy-pr-decorator@57e223b003c96ab604014d81c864634919a06033 # v1.0.1
         with:
           results-file: 'trivy-results.json'
           github-token: ${{ secrets.GITHUB_TOKEN }}
